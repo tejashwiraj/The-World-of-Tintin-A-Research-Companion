@@ -88,11 +88,16 @@ const RAW = [
 const A = RAW.map((r,i)=>({i:i+1,t:r[0],y:r[1],place:r[2],ll:r[3]===null?null:[r[3],r[4]],mode:r[5],fict:r[6],note:r[7]}));
 
 const map = L.map('map',{minZoom:2,worldCopyJump:true}).setView([25,10],2);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-  maxZoom:18,
-  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-}).addTo(map);
-const layer = L.layerGroup().addTo(map);
+
+L.tileLayer(
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }
+).addTo(map);
+
 
 let limit = A.length, active = new Set(Object.keys(MODES)), timer = null;
 
