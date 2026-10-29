@@ -554,7 +554,24 @@
 
     // Keep the map correctly sized if its container changes.
     setTimeout(() => map.invalidateSize(), 200);
+
+// Slider and play
+const slider = document.getElementById('slider');
+slider.max = A.length;
+slider.oninput = ()=>{ limit = +slider.value; render(); };
+document.getElementById('play').onclick = function(){
+  if(timer){ clearInterval(timer); timer=null; this.textContent='▶ Play journey'; return; }
+  limit = 1; slider.value = 1; render();
+  this.textContent='⏸ Pause';
+  timer = setInterval(()=>{
+    if(limit>=A.length){ clearInterval(timer); timer=null; document.getElementById('play').textContent='▶ Play journey'; return; }
+    limit++; slider.value=limit; render();
+  }, 1100);
+};
+
   </script>
+
+
 
 </body>
 </html>
