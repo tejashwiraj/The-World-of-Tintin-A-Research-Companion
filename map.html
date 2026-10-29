@@ -1,65 +1,561 @@
+
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Tintin Map</title>
+  <title>Tintin's Travels | Interactive Research Atlas</title>
 
-    <!-- Leaflet's map design -->
-    <link rel="stylesheet"
-          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-    <style>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+    rel="stylesheet">
 
-        #map {
-            height: 600px;
-            width: 100%;
-        }
+  <style>
+    :root {
+      --paper: #f7f4ec;
+      --white: #fffefa;
+      --ink: #292d2b;
+      --muted: #77786f;
+      --red: #b64035;
+      --line: #e4dfd4;
+      --olive: #777d59;
+    }
 
-    </style>
+    * {
+      box-sizing: border-box;
+    }
 
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+    }
+
+    .topbar {
+      padding: 15px 6%;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      font-size: 13px;
+    }
+
+    .brand span {
+      color: var(--red);
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .hero {
+      padding: 43px 6% 27px;
+      max-width: 1150px;
+      margin: auto;
+    }
+
+    .eyebrow {
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(34px, 5vw, 55px);
+      line-height: 1.12;
+      font-weight: 500;
+      margin: 12px 0;
+    }
+
+    .intro {
+      color: #65665e;
+      line-height: 1.8;
+      max-width: 680px;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 30px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat strong {
+      display: block;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 25px;
+      font-weight: 500;
+    }
+
+    .stat span {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .workspace {
+      max-width: 1400px;
+      margin: auto;
+      padding: 0 6% 45px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      font-weight: 700;
+    }
+
+    .filters {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .filter {
+      background: transparent;
+      border: 1px solid #d8d2c6;
+      border-radius: 30px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      color: var(--ink);
+      transition: .2s;
+    }
+
+    .filter:hover,
+    .filter.active {
+      background: var(--red);
+      color: white;
+      border-color: var(--red);
+    }
+
+    .map-frame {
+      background: var(--white);
+      border: 1px solid var(--line);
+      padding: 9px;
+      border-radius: 5px;
+      box-shadow: 0 12px 35px rgba(45, 39, 25, .06);
+    }
+
+    #map {
+      width: 100%;
+      height: min(64vh, 610px);
+      min-height: 390px;
+      background: #eae7dc;
+    }
+
+    .map-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 4px 3px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .below-map {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .info-card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      padding: 21px;
+    }
+
+    .info-card h2 {
+      font: 600 20px "Playfair Display", Georgia, serif;
+      margin: 0 0 12px;
+    }
+
+    .info-card p,
+    .info-card li {
+      font-size: 12px;
+      color: #66675f;
+      line-height: 1.8;
+    }
+
+    .info-card ul {
+      padding-left: 17px;
+      margin-bottom: 0;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--red);
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px var(--red);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 23px 6%;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    /* Custom Leaflet markers */
+
+    .album-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      border: 3px solid #fffefa;
+      box-shadow: 0 2px 8px #34251f55;
+      font: 700 11px "DM Sans", sans-serif;
+      transition: transform .2s;
+    }
+
+    .album-marker:hover {
+      transform: scale(1.18);
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: #fffefa;
+      border-radius: 4px;
+      box-shadow: 0 5px 25px #292d2b22;
+    }
+
+    .leaflet-popup-content {
+      margin: 17px;
+      min-width: 180px;
+      font-family: "DM Sans", sans-serif;
+      line-height: 1.6;
+    }
+
+    .popup-year {
+      color: var(--red);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    .popup-title {
+      font: 600 20px "Playfair Display", Georgia, serif;
+      margin: 5px 0;
+    }
+
+    .popup-text {
+      font-size: 12px;
+      color: #66675f;
+    }
+
+    .popup-theme {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 7px;
+      background: #f2e8dc;
+      color: #864238;
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    @media (max-width: 650px) {
+      .hero {
+        padding-top: 30px;
+      }
+
+      .workspace {
+        padding-left: 4%;
+        padding-right: 4%;
+      }
+
+      .below-map {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        min-height: 420px;
+        height: 60vh;
+      }
+
+      .stats {
+        gap: 20px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
+  <header class="topbar">
+    <div class="brand">THE TINTIN <span>ARCHIVE</span></div>
+    <a class="back-link" href="index.html">← Back to research</a>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Digital Humanities · Spatial Research</div>
+
     <h1>Tintin's Travels</h1>
 
-    <div id="map"></div>
+    <p class="intro">
+      Mapping movement, modernity and the geography of adventure
+      across Hergé's comic-book world. Explore the places, journeys
+      and cultural encounters that shape Tintin's adventures.
+    </p>
 
+    <div class="stats">
+      <div class="stat">
+        <strong id="location-count">4</strong>
+        <span>Mapped entries</span>
+      </div>
+      <div class="stat">
+        <strong>1929–1976</strong>
+        <span>Album era</span>
+      </div>
+      <div class="stat">
+        <strong>01</strong>
+        <span>Research atlas</span>
+      </div>
+    </div>
+  </section>
 
-    <!-- Leaflet's map functionality -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <main class="workspace">
 
-    <script>
+    <div class="toolbar">
+      <div class="toolbar-label">Explore by theme</div>
 
-        // Create the map
-        var map = L.map('map').setView([20, 20], 2);
+      <div class="filters" id="filters">
+        <button class="filter active" data-theme="all">All locations</button>
+        <button class="filter" data-theme="travel">Travel</button>
+        <button class="filter" data-theme="colonialism">Colonialism</button>
+        <button class="filter" data-theme="modernity">Modernity</button>
+        <button class="filter" data-theme="technology">Technology</button>
+      </div>
+    </div>
 
-        // Put the actual world map on it
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
+    <div class="map-frame">
+      <div id="map"></div>
+      <div class="map-caption">
+        <span>SELECT A MARKER TO EXPLORE AN ALBUM</span>
+        <span>Pan and zoom to explore geographical contexts</span>
+      </div>
+    </div>
 
-        L.marker([28.4, 84.1]).addTo(map)
-        .bindPopup("<b>Tintin in Tibet</b><br>Year:1960<br>Location: Tibet/Himalayan region.")
-        .openPopup();
+    <section class="below-map">
 
-        L.marker([41.8781, -87.6298]).addTo(map)
-        .bindPopup("<b>Tintin in America</b><br>Year:1932<br>Location: Chicago, Lake City, Red Skin City.")
-        .openPopup();
+      <article class="info-card">
+        <h2>Reading the map</h2>
+        <p>
+          Each marker connects an album to a geographical setting.
+          The map can help investigate how travel, movement,
+          cultural encounters and technology organise Tintin's world.
+        </p>
+        <p>
+          Regional markers are approximate research references,
+          not claims that every scene occurs at the plotted point.
+        </p>
+      </article>
 
-        L.marker([26.8206, 30.8025]).addTo(map)
-        .bindPopup("<b>Cigars of the Pharaoh</b><br>Year:1934<br>Location: Egypt.")
-        .openPopup();
+      <article class="info-card">
+        <h2>Map legend</h2>
+        <div class="legend-item">
+          <span class="legend-dot"></span>
+          <span>Album and geographical setting</span>
+        </div>
+        <p>
+          Themes are assigned to albums for exploratory purposes.
+          Refine them as your textual analysis develops.
+        </p>
+        <ul>
+          <li>Travel — movement and exploration</li>
+          <li>Colonialism — representation and power</li>
+          <li>Modernity — technology and social change</li>
+        </ul>
+      </article>
 
-       L.marker([31.2304, 121.4737]).addTo(map)
-        .bindPopup("<b>The Blue Lotus</b><br>Year:1936<br>Location: Shanghai, China..")
-        .openPopup();
+    </section>
+  </main>
 
+  <footer>
+    A Digital Humanities research project on Tintin, visual culture
+    and modernity.<br>
+    Map data © OpenStreetMap contributors · Map powered by Leaflet.
+  </footer>
 
-    </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Initialise the world map.
+    const map = L.map("map", {
+      zoomControl: false,
+      minZoom: 2
+    }).setView([25, 35], 2);
+
+    L.control.zoom({ position: "topright" }).addTo(map);
+
+    // A muted basemap keeps attention on the research markers.
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+      {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: "abcd",
+        maxZoom: 19
+      }
+    ).addTo(map);
+
+    // Starter dataset. Add more albums as your research grows.
+    // Coordinates represent cities or approximate regional contexts.
+    const albums = [
+      {
+        title: "Tintin in America",
+        year: "1932",
+        place: "Chicago, United States",
+        lat: 41.8781,
+        lng: -87.6298,
+        themes: ["travel", "colonialism", "modernity"],
+        note:
+          "Urban modernity, crime, industrial capitalism and the representation of the United States."
+      },
+      {
+        title: "Cigars of the Pharaoh",
+        year: "1934",
+        place: "Egypt · approximate regional marker",
+        lat: 26.8206,
+        lng: 30.8025,
+        themes: ["travel", "colonialism"],
+        note:
+          "Travel, archaeology and the representation of places through adventure and discovery."
+      },
+      {
+        title: "The Blue Lotus",
+        year: "1936",
+        place: "Shanghai, China",
+        lat: 31.2304,
+        lng: 121.4737,
+        themes: ["travel", "colonialism", "modernity"],
+        note:
+          "Colonial power, political representation and cultural encounter in a changing urban setting."
+      },
+      {
+        title: "Tintin in Tibet",
+        year: "1960",
+        place: "Himalayan region · approximate marker",
+        lat: 28.4,
+        lng: 84.1,
+        themes: ["travel"],
+        note:
+          "Friendship, isolation, difficult terrain and a journey shaped by emotional rather than material reward."
+      }
+    ];
+
+    const markers = [];
+
+    // Create a custom circular marker for each album.
+    albums.forEach((album, index) => {
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="album-marker">${index + 1}</div>`,
+        iconSize: [27, 27],
+        iconAnchor: [13, 13]
+      });
+
+      const marker = L.marker([album.lat, album.lng], {
+        icon: icon,
+        title: album.title
+      });
+
+      const themeLabels = album.themes
+        .map(theme => theme.charAt(0).toUpperCase() + theme.slice(1))
+        .join(" · ");
+
+      marker.bindPopup(`
+        <div class="popup-year">${album.year} · Album entry</div>
+        <div class="popup-title">${album.title}</div>
+        <div class="popup-text"><b>Setting:</b> ${album.place}</div>
+        <div class="popup-text" style="margin-top:8px">
+          ${album.note}
+        </div>
+        <div class="popup-theme">${themeLabels}</div>
+      `);
+
+      marker.addTo(map);
+      markers.push({ marker, album });
+    });
+
+    // Update the visible markers when a theme is selected.
+    const filterButtons = document.querySelectorAll(".filter");
+
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        filterButtons.forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+
+        const selectedTheme = button.dataset.theme;
+        let visibleCount = 0;
+
+        markers.forEach(({ marker, album }) => {
+          const matches =
+            selectedTheme === "all" ||
+            album.themes.includes(selectedTheme);
+
+          if (matches) {
+            if (!map.hasLayer(marker)) marker.addTo(map);
+            visibleCount++;
+          } else {
+            if (map.hasLayer(marker)) map.removeLayer(marker);
+          }
+        });
+
+        document.getElementById("location-count").textContent =
+          visibleCount;
+      });
+    });
+
+    // Keep the map correctly sized if its container changes.
+    setTimeout(() => map.invalidateSize(), 200);
+  </script>
 
 </body>
-
 </html>
