@@ -1,95 +1,441 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tintin’s Travels</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<style>
-  body{margin:0;font-family:Georgia,serif;background:#f6f1e7;color:#2b2b2b}
-  header{padding:18px 24px 6px}
-  h1{margin:0;font-size:1.7rem}
-  header p{margin:4px 0 0;color:#6b6358;font-size:.95rem}
-  .controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 24px}
-  .chip{border:1px solid #cfc6b4;background:#fff;border-radius:999px;padding:4px 12px;font:inherit;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-  .chip.off{opacity:.35}
-  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
-  .wrap{display:flex;flex-wrap:wrap;gap:16px;padding:0 24px 24px}
-  #map{flex:2 1 520px;height:600px;border-radius:12px;border:1px solid #cfc6b4}
-  #panel{flex:1 1 280px;background:#fff;border:1px solid #cfc6b4;border-radius:12px;padding:16px;min-height:200px}
-  #panel h2{margin:0 0 4px;font-size:1.2rem}
-  .meta{color:#6b6358;font-size:.9rem;margin:2px 0}
-  .note{margin-top:10px;line-height:1.5}
-  .tag{display:inline-block;color:#fff;border-radius:4px;padding:1px 8px;font-size:.8rem}
-  button.play{background:#2b2b2b;color:#fff;border:0;border-radius:6px;padding:6px 14px;font:inherit;cursor:pointer}
-  #offmap button{display:block;width:100%;text-align:left;margin-top:6px;border:1px dashed #aaa;background:#faf7f0;border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
-  input[type=range]{width:200px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Tintin's Travel</title>
+
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --paper: #f7f4ec;
+      --white: #fffefa;
+      --ink: #292d2b;
+      --muted: #77786f;
+      --red: #b64035;
+      --line: #e4dfd4;
+      --olive: #777d59;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+    }
+
+    .topbar {
+      padding: 15px 6%;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      font-size: 13px;
+    }
+
+    .brand span {
+      color: var(--red);
+    }
+
+    .back-link {
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .hero {
+      padding: 43px 6% 27px;
+      max-width: 1150px;
+      margin: auto;
+    }
+
+    .eyebrow {
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(34px, 5vw, 55px);
+      line-height: 1.12;
+      font-weight: 500;
+      margin: 12px 0;
+    }
+
+    .intro {
+      color: #65665e;
+      line-height: 1.8;
+      max-width: 680px;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 30px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat strong {
+      display: block;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 25px;
+      font-weight: 500;
+    }
+
+    .stat span {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .workspace {
+      max-width: 1400px;
+      margin: auto;
+      padding: 0 6% 45px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      font-weight: 700;
+    }
+
+    .filters {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .filter {
+      background: transparent;
+      border: 1px solid #d8d2c6;
+      border-radius: 30px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      color: var(--ink);
+      transition: .2s;
+    }
+
+    .filter:hover,
+    .filter.active {
+      background: var(--red);
+      color: white;
+      border-color: var(--red);
+    }
+
+    .map-frame {
+      background: var(--white);
+      border: 1px solid var(--line);
+      padding: 9px;
+      border-radius: 5px;
+      box-shadow: 0 12px 35px rgba(45, 39, 25, .06);
+    }
+
+    #map {
+      width: 100%;
+      height: min(64vh, 610px);
+      min-height: 390px;
+      background: #eae7dc;
+    }
+
+    .map-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 4px 3px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .below-map {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .info-card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      padding: 21px;
+    }
+
+    .info-card h2 {
+      font: 600 20px "Playfair Display", Georgia, serif;
+      margin: 0 0 12px;
+    }
+
+    .info-card p,
+    .info-card li {
+      font-size: 12px;
+      color: #66675f;
+      line-height: 1.8;
+    }
+
+    .info-card ul {
+      padding-left: 17px;
+      margin-bottom: 0;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--red);
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px var(--red);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 23px 6%;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    /* Custom Leaflet markers */
+
+    .album-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      border: 3px solid #fffefa;
+      box-shadow: 0 2px 8px #34251f55;
+      font: 700 11px "DM Sans", sans-serif;
+      transition: transform .2s;
+    }
+
+    .album-marker:hover {
+      transform: scale(1.18);
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: #fffefa;
+      border-radius: 4px;
+      box-shadow: 0 5px 25px #292d2b22;
+    }
+
+    .leaflet-popup-content {
+      margin: 17px;
+      min-width: 180px;
+      font-family: "DM Sans", sans-serif;
+      line-height: 1.6;
+    }
+
+    .popup-year {
+      color: var(--red);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    .popup-title {
+      font: 600 20px "Playfair Display", Georgia, serif;
+      margin: 5px 0;
+    }
+
+    .popup-text {
+      font-size: 12px;
+      color: #66675f;
+    }
+
+    .popup-theme {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 7px;
+      background: #f2e8dc;
+      color: #864238;
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    @media (max-width: 650px) {
+      .hero {
+        padding-top: 30px;
+      }
+
+      .workspace {
+        padding-left: 4%;
+        padding-right: 4%;
+      }
+
+      .below-map {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        min-height: 420px;
+        height: 60vh;
+      }
+
+      .stats {
+        gap: 20px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<header>
-  <h1>Tintin’s Travels</h1>
-  <p>Constant movement, no resolution: 23 albums in publication order. Click a marker for details.</p>
-</header>
 
-<div class="controls">
-  <span id="chips"></span>
-  <label>Albums shown <input type="range" id="slider" min="1" value="23"></label>
-  <button class="play" id="play">▶ Play journey</button>
-  <span id="sliderLabel" class="meta"></span>
-</div>
+  <header class="topbar">
+    <div class="brand">TINTIN’S <span>TRAVEL</span></div>
+    <a class="back-link" href="index.html">← Back to Tintin’s Travel</a>
+  </header>
 
-<div class="wrap">
-  <div id="map"></div>
-  <aside id="panel">
-    <div id="detail"><p class="meta">Click a marker to see the album, its journey, and the research note.</p></div>
-    <hr>
-    <div id="offmap"><p class="meta"><b>Off the map</b> (places that can’t be plotted)</p></div>
-    <p class="meta">Dashed outline = fictional or approximate location.</p>
-  </aside>
-</div>
+  <section class="hero">
+    <div class="eyebrow">Tintin’s Travel · Interactive Atlas</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>
-// Transport modes: [label, colour]
-const MODES = {
-  ship:["Ship","#2a6f97"], train:["Train","#8a5a44"], plane:["Plane","#e07a1f"],
-  car:["Car / overland","#6a994e"], rocket:["Rocket","#c1121f"],
-  foot:["On foot","#7b2cbf"], home:["Stationary","#6c757d"]
-};
+    <h1>Tintin’s Travel</h1>
 
-// [title, year, place, lat, lng, mode, fictional/approximate?, research note]
-// DRAFT DATA: verify places and transport against the albums, and replace notes with your own argument.
-const RAW = [
- ["Tintin in the Land of the Soviets",1930,"Moscow, USSR",55.75,37.62,"train",false,"The first departure: a reporter sent abroad. The template every later album repeats."],
- ["Tintin in the Congo",1931,"Belgian Congo",-4.3,15.3,"ship",false,"Colonial setting by an ‘armchair traveller’. The series’ most criticised album for its colonial representation."],
- ["Tintin in America",1932,"Chicago and the American West",41.88,-87.63,"train",false,"Gangster iconography and Chaplin/Keaton-style gags. Drawn Cinema, Case Study I."],
- ["Cigars of the Pharaoh",1934,"Egypt, the Arabian desert, India",26.82,30.8,"ship",false,"Disguise and conspiracy borrowed from French silent serials. Drawn Cinema, Case Study II."],
- ["The Blue Lotus",1936,"Shanghai, China",31.23,121.47,"car",false,"Research-based realism after Hergé’s meeting with Chang. Ligne claire matures."],
- ["The Broken Ear",1937,"San Theodoros (fictional), South America",-12,-62,"ship",true,"Invented geography enters the series. The country returns in Tintin and the Picaros."],
- ["The Black Island",1938,"Britain and a Scottish island",56.5,-4.2,"plane",false,"A pursuit structure across modern transport: plane, train, boat."],
- ["King Ottokar’s Sceptre",1939,"Syldavia (fictional), Balkans",44.2,21,"plane",true,"A fictional kingdom that later hosts the rocket launch in Destination Moon."],
- ["Land of Black Gold",1950,"Khemed (fictional), Middle East",24.5,45,"car",true,"Oil, fuel and desert travel; invented Middle Eastern geography."],
- ["The Crab with the Golden Claws",1941,"Atlantic, Morocco and the Sahara",31,-6.5,"ship",false,"Drawn Cinema, Case Study III: cross-cutting and rhythm control. Haddock arrives."],
- ["The Shooting Star",1942,"Arctic Ocean",70,-15,"ship",true,"A race to a fallen meteorite; apocalyptic anxiety in the occupation years."],
- ["The Secret of the Unicorn",1943,"Brussels, Belgium",50.85,4.35,"car",false,"A mystery that starts in a city market. The journey begins at home."],
- ["Red Rackham’s Treasure",1944,"Caribbean (approximate)",17,-62,"ship",true,"A treasure hunt that ends with Marlinspike Hall, the series’ domestic anchor."],
- ["The Seven Crystal Balls",1948,"Belgium and Saint-Nazaire, France",47.27,-2.21,"car",false,"Nightmare imagery echoing Griffith’s film, as argued in Drawn Cinema."],
- ["Prisoners of the Sun",1949,"Peruvian Andes",-13.5,-72,"ship",false,"A descent into an Inca world; the journey as encounter with the ancient and modern."],
- ["Destination Moon",1953,"Syldavian launch site (fictional)",44.6,21.4,"rocket",true,"Cold War scientific modernity. The rocket as a ‘performative object’."],
- ["Explorers on the Moon",1954,"The Moon",null,null,"rocket",true,"The journey leaves the map altogether."],
- ["The Calculus Affair",1956,"Geneva, Switzerland, and Borduria (fictional)",46.2,6.14,"car",false,"Cold War espionage; Thomson and Thompson’s umbrella routine as absurd comedy."],
- ["The Red Sea Sharks",1958,"Red Sea",20,38,"ship",false,"Earlier characters and places return, a recycling of the series’ own world."],
- ["Tintin in Tibet",1960,"Nepal and Tibet",28.4,84.1,"foot",false,"An expedition driven by friendship rather than conflict. The most personal album."],
- ["The Castafiore Emerald",1963,"Marlinspike Hall, Belgium",50.6,4.3,"home",false,"The ‘journey’ album where nobody leaves home. Suspense without movement: a test case for the absurd."],
- ["Flight 714 to Sydney",1968,"Jakarta, Indonesia",-6.2,106.82,"plane",false,"Air travel as routine; a stopover turns into captivity."],
- ["Tintin and the Picaros",1976,"San Theodoros (fictional)",-10,-60,"plane",true,"The last completed album returns to San Theodoros: evidence for the cyclical argument."]
-];
-const A = RAW.map((r,i)=>({i:i+1,t:r[0],y:r[1],place:r[2],ll:r[3]===null?null:[r[3],r[4]],mode:r[5],fict:r[6],note:r[7]}));
+    <p class="intro">
+      Mapping movement, modernity and the geography of adventure
+      across Hergé's comic-book world. Explore the places, journeys
+      and cultural encounters that shape Tintin's adventures.
+    </p>
 
-const map = L.map('map',{minZoom:2,worldCopyJump:true}).setView([25,10],2);
+    <div class="stats">
+      <div class="stat">
+        <strong id="location-count">4</strong>
+        <span>Mapped entries</span>
+      </div>
+      <div class="stat">
+        <strong>1929–1976</strong>
+        <span>Album era</span>
+      </div>
+      <div class="stat">
+        <strong>01</strong>
+        <span>Travel atlas</span>
+      </div>
+    </div>
+  </section>
 
-L.tileLayer(
+  <main class="workspace">
+
+    <div class="toolbar">
+      <div class="toolbar-label">Explore by theme</div>
+
+      <div class="filters" id="filters">
+        <button class="filter active" data-theme="all">All locations</button>
+        <button class="filter" data-theme="travel">Travel</button>
+        <button class="filter" data-theme="colonialism">Colonialism</button>
+        <button class="filter" data-theme="modernity">Modernity</button>
+        <button class="filter" data-theme="technology">Technology</button>
+      </div>
+    </div>
+
+    <div class="map-frame">
+      <div id="map"></div>
+      <div class="map-caption">
+        <span>SELECT A MARKER TO EXPLORE AN ALBUM</span>
+        <span>Pan and zoom to explore geographical contexts</span>
+      </div>
+    </div>
+
+    <section class="below-map">
+
+      <article class="info-card">
+        <h2>Reading the map</h2>
+        <p>
+          Each marker connects an album to a geographical setting.
+          The map can help investigate how travel, movement,
+          cultural encounters and technology organise Tintin's world.
+        </p>
+        <p>
+          Regional markers are approximate research references,
+          not claims that every scene occurs at the plotted point.
+        </p>
+      </article>
+
+      <article class="info-card">
+        <h2>Map legend</h2>
+        <div class="legend-item">
+          <span class="legend-dot"></span>
+          <span>Album and geographical setting</span>
+        </div>
+        <p>
+          Themes are assigned to albums for exploratory purposes.
+          Refine them as your textual analysis develops.
+        </p>
+        <ul>
+          <li>Travel — movement and exploration</li>
+          <li>Colonialism — representation and power</li>
+          <li>Modernity — technology and social change</li>
+        </ul>
+      </article>
+
+    </section>
+  </main>
+
+  <footer>
+    Explore the places, journeys and cultural encounters in Tintin’s adventures.<br>
+    Map data © OpenStreetMap contributors · Map powered by Leaflet.
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Initialise the world map.
+    const map = L.map("map", {
+      zoomControl: false,
+      minZoom: 2
+    }).setView([25, 35], 2);
+
+    L.control.zoom({ position: "topright" }).addTo(map);
+
+    // Standard OpenStreetMap tiles: no API key required.
+
+    L.tileLayer(
   "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   {
     maxZoom: 19,
@@ -98,72 +444,117 @@ L.tileLayer(
   }
 ).addTo(map);
 
+    // Starter dataset. Add more albums as your research grows.
+    // Coordinates represent cities or approximate regional contexts.
+    const albums = [
+      {
+        title: "Tintin in America",
+        year: "1932",
+        place: "Chicago, United States",
+        lat: 41.8781,
+        lng: -87.6298,
+        themes: ["travel", "colonialism", "modernity"],
+        note:
+          "Urban modernity, crime, industrial capitalism and the representation of the United States."
+      },
+      {
+        title: "Cigars of the Pharaoh",
+        year: "1934",
+        place: "Egypt · approximate regional marker",
+        lat: 26.8206,
+        lng: 30.8025,
+        themes: ["travel", "colonialism"],
+        note:
+          "Travel, archaeology and the representation of places through adventure and discovery."
+      },
+      {
+        title: "The Blue Lotus",
+        year: "1936",
+        place: "Shanghai, China",
+        lat: 31.2304,
+        lng: 121.4737,
+        themes: ["travel", "colonialism", "modernity"],
+        note:
+          "Colonial power, political representation and cultural encounter in a changing urban setting."
+      },
+      {
+        title: "Tintin in Tibet",
+        year: "1960",
+        place: "Himalayan region · approximate marker",
+        lat: 28.4,
+        lng: 84.1,
+        themes: ["travel"],
+        note:
+          "Friendship, isolation, difficult terrain and a journey shaped by emotional rather than material reward."
+      }
+    ];
 
-let limit = A.length, active = new Set(Object.keys(MODES)), timer = null;
+    const markers = [];
 
-function show(a){
-  const [label,col] = MODES[a.mode];
-  document.getElementById('detail').innerHTML =
-    `<h2>${a.t}</h2><p class="meta">${a.y} · ${a.place}</p>
-     <p><span class="tag" style="background:${col}">${label}</span></p>
-     <p class="note">${a.note}</p>`;
-  if(a.ll) map.flyTo(a.ll, Math.max(map.getZoom(),4), {duration:1});
-}
+    // Create a custom circular marker for each album.
+    albums.forEach((album, index) => {
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="album-marker">${index + 1}</div>`,
+        iconSize: [27, 27],
+        iconAnchor: [13, 13]
+      });
 
-function render(){
-  layer.clearLayers();
-  const vis = A.filter((a,i)=> i<limit && active.has(a.mode));
-  const pts = [];
-  vis.forEach(a=>{
-    if(!a.ll) return;
-    const m = L.circleMarker(a.ll,{
-      radius:9, color:a.fict?"#222":"#fff", weight:2, dashArray:a.fict?"3":null,
-      fillColor:MODES[a.mode][1], fillOpacity:.9
-    }).bindTooltip(a.i+". "+a.t+" ("+a.y+")");
-    m.on('click',()=>show(a));
-    m.on('mouseover',()=>m.setStyle({radius:13}));
-    m.on('mouseout',()=>m.setStyle({radius:9}));
-    m.addTo(layer);
-    pts.push(a.ll);
-  });
-  L.polyline(pts,{color:"#555",weight:1.5,dashArray:"4 6",opacity:.6}).addTo(layer);
-  const cur = A[limit-1];
-  document.getElementById('sliderLabel').textContent = `Up to: ${cur.t} (${cur.y})`;
-  const off = document.getElementById('offmap');
-  off.innerHTML = '<p class="meta"><b>Off the map</b> (places that can’t be plotted)</p>';
-  vis.filter(a=>!a.ll).forEach(a=>{
-    const b=document.createElement('button');
-    b.textContent='🌙 '+a.t+' ('+a.y+')';
-    b.onclick=()=>show(a);
-    off.appendChild(b);
-  });
-}
+      const marker = L.marker([album.lat, album.lng], {
+        icon: icon,
+        title: album.title
+      });
 
-// Transport filter chips
-const chips = document.getElementById('chips');
-Object.entries(MODES).forEach(([k,[label,col]])=>{
-  const b = document.createElement('button');
-  b.className='chip';
-  b.innerHTML=`<span class="dot" style="background:${col}"></span>${label}`;
-  b.onclick=()=>{ active.has(k)?active.delete(k):active.add(k); b.classList.toggle('off'); render(); };
-  chips.appendChild(b);
-});
+      const themeLabels = album.themes
+        .map(theme => theme.charAt(0).toUpperCase() + theme.slice(1))
+        .join(" · ");
 
-// Slider and play
-const slider = document.getElementById('slider');
-slider.max = A.length;
-slider.oninput = ()=>{ limit = +slider.value; render(); };
-document.getElementById('play').onclick = function(){
-  if(timer){ clearInterval(timer); timer=null; this.textContent='▶ Play journey'; return; }
-  limit = 1; slider.value = 1; render();
-  this.textContent='⏸ Pause';
-  timer = setInterval(()=>{
-    if(limit>=A.length){ clearInterval(timer); timer=null; document.getElementById('play').textContent='▶ Play journey'; return; }
-    limit++; slider.value=limit; render();
-  }, 1100);
-};
+      marker.bindPopup(`
+        <div class="popup-year">${album.year} · Album entry</div>
+        <div class="popup-title">${album.title}</div>
+        <div class="popup-text"><b>Setting:</b> ${album.place}</div>
+        <div class="popup-text" style="margin-top:8px">
+          ${album.note}
+        </div>
+        <div class="popup-theme">${themeLabels}</div>
+      `);
 
-render();
-</script>
+      marker.addTo(map);
+      markers.push({ marker, album });
+    });
+
+    // Update the visible markers when a theme is selected.
+    const filterButtons = document.querySelectorAll(".filter");
+
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        filterButtons.forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+
+        const selectedTheme = button.dataset.theme;
+        let visibleCount = 0;
+
+        markers.forEach(({ marker, album }) => {
+          const matches =
+            selectedTheme === "all" ||
+            album.themes.includes(selectedTheme);
+
+          if (matches) {
+            if (!map.hasLayer(marker)) marker.addTo(map);
+            visibleCount++;
+          } else {
+            if (map.hasLayer(marker)) map.removeLayer(marker);
+          }
+        });
+
+        document.getElementById("location-count").textContent =
+          visibleCount;
+      });
+    });
+
+    // Keep the map correctly sized if its container changes.
+    setTimeout(() => map.invalidateSize(), 200);
+  </script>
+
 </body>
 </html>
