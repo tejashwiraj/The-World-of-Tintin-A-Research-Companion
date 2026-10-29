@@ -1,369 +1,79 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Tintin's Travel</title>
 
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
-    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --paper: #f7f4ec;
-      --white: #fffefa;
-      --ink: #292d2b;
-      --muted: #77786f;
-      --red: #b64035;
-      --line: #e4dfd4;
-      --olive: #777d59;
+    :root{--paper:#f7f4ec;--white:#fffefa;--ink:#292d2b;--muted:#77786f;--red:#b64035;--line:#e4dfd4;--olive:#777d59}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif}
+    .topbar{padding:15px 6%;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}
+    .brand{font-weight:700;letter-spacing:1.5px;font-size:13px}
+    .brand span{color:var(--red)}
+    .back-link{text-decoration:none;color:var(--ink);font-size:13px}
+    .hero{padding:43px 6% 27px;max-width:1150px;margin:auto}
+    .eyebrow{color:var(--red);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+    h1{font-family:"Playfair Display",Georgia,serif;font-size:clamp(34px,5vw,55px);line-height:1.12;font-weight:500;margin:12px 0}
+    .intro{color:#65665e;line-height:1.8;max-width:680px;font-size:14px}
+    .stats{display:flex;gap:30px;margin-top:24px;flex-wrap:wrap}
+    .stat strong{display:block;font-family:"Playfair Display",Georgia,serif;font-size:25px;font-weight:500}
+    .stat span{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+    .workspace{max-width:1400px;margin:auto;padding:0 6% 45px}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+    .toolbar-label{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;font-weight:700}
+    .filters{display:flex;gap:7px;flex-wrap:wrap}
+    .filter{background:transparent;border:1px solid #d8d2c6;border-radius:30px;padding:9px 13px;cursor:pointer;font:inherit;font-size:11px;color:var(--ink);transition:.2s}
+    .filter:hover,.filter.active{background:var(--red);color:#fff;border-color:var(--red)}
+
+    /* Journey controls */
+    .journey{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px;margin-bottom:14px}
+    .play{background:var(--ink);color:#fff;border:0;border-radius:30px;padding:9px 18px;font:inherit;font-size:11px;font-weight:600;cursor:pointer}
+    .play:hover{background:var(--red)}
+    #slider{width:220px;accent-color:var(--red)}
+    #slider-label{font-size:12px;color:var(--muted)}
+
+    .map-frame{background:var(--white);border:1px solid var(--line);padding:9px;border-radius:5px;box-shadow:0 12px 35px rgba(45,39,25,.06)}
+    #map{width:100%;height:min(64vh,610px);min-height:390px;background:#eae7dc}
+    .map-caption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px 3px;font-size:10px;color:var(--muted)}
+    #offmap{margin-top:10px;font-size:12px;color:#66675f;line-height:1.7}
+    #offmap:empty{display:none}
+
+    .below-map{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+    .info-card{background:var(--white);border:1px solid var(--line);padding:21px}
+    .info-card h2{font:600 20px "Playfair Display",Georgia,serif;margin:0 0 12px}
+    .info-card p,.info-card li{font-size:12px;color:#66675f;line-height:1.8}
+    .info-card ul{padding-left:17px;margin-bottom:0}
+    .legend-item{display:flex;align-items:center;gap:9px;margin:10px 0;font-size:12px}
+    .legend-dot{width:11px;height:11px;border-radius:50%;background:var(--red);border:2px solid #fff;box-shadow:0 0 0 1px var(--red)}
+    .legend-diamond{width:11px;height:11px;background:var(--olive);transform:rotate(45deg);display:inline-block;margin:0 2px}
+    footer{border-top:1px solid var(--line);padding:23px 6%;text-align:center;font-size:11px;color:var(--muted);line-height:1.8}
+
+    /* Markers */
+    .album-marker{display:flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:var(--red);color:#fff;border:3px solid #fffefa;box-shadow:0 2px 8px #34251f55;font:700 11px "DM Sans",sans-serif;transition:filter .2s}
+    .album-marker:hover{filter:brightness(1.15)}
+    .album-marker.fictional-marker{border-radius:3px;background:var(--olive);transform:rotate(45deg) scale(.85)}
+    .album-marker.fictional-marker span{transform:rotate(-45deg)}
+
+    /* Popups */
+    .leaflet-popup-content-wrapper{background:#fffefa;border-radius:4px;box-shadow:0 5px 25px #292d2b22}
+    .leaflet-popup-content{margin:17px;min-width:180px;font-family:"DM Sans",sans-serif;line-height:1.6}
+    .popup-year{color:var(--red);font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+    .popup-title{font:600 20px "Playfair Display",Georgia,serif;margin:5px 0}
+    .popup-text{font-size:12px;color:#66675f}
+    .popup-theme{display:inline-block;margin-top:8px;padding:4px 7px;background:#f2e8dc;color:#864238;font-size:10px;border-radius:3px}
+
+    @media (max-width:650px){
+      .hero{padding-top:30px}
+      .workspace{padding-left:4%;padding-right:4%}
+      .below-map{grid-template-columns:1fr}
+      #map{min-height:420px;height:60vh}
+      .stats{gap:20px}
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--paper);
-      color: var(--ink);
-      font-family: "DM Sans", sans-serif;
-    }
-
-    .topbar {
-      padding: 15px 6%;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .brand {
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      font-size: 13px;
-    }
-
-    .brand span {
-      color: var(--red);
-    }
-
-    .back-link {
-      text-decoration: none;
-      color: var(--ink);
-      font-size: 13px;
-    }
-
-    .hero {
-      padding: 43px 6% 27px;
-      max-width: 1150px;
-      margin: auto;
-    }
-
-    .eyebrow {
-      color: var(--red);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: clamp(34px, 5vw, 55px);
-      line-height: 1.12;
-      font-weight: 500;
-      margin: 12px 0;
-    }
-
-    .intro {
-      color: #65665e;
-      line-height: 1.8;
-      max-width: 680px;
-      font-size: 14px;
-    }
-
-    .stats {
-      display: flex;
-      gap: 30px;
-      margin-top: 24px;
-      flex-wrap: wrap;
-    }
-
-    .stat strong {
-      display: block;
-      font-family: "Playfair Display", Georgia, serif;
-      font-size: 25px;
-      font-weight: 500;
-    }
-
-    .stat span {
-      font-size: 10px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .workspace {
-      max-width: 1400px;
-      margin: auto;
-      padding: 0 6% 45px;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .toolbar-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1.3px;
-      font-weight: 700;
-    }
-
-    .filters {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .filter {
-      background: transparent;
-      border: 1px solid #d8d2c6;
-      border-radius: 30px;
-      padding: 9px 13px;
-      cursor: pointer;
-      font: inherit;
-      font-size: 11px;
-      color: var(--ink);
-      transition: .2s;
-    }
-
-    .filter:hover,
-    .filter.active {
-      background: var(--red);
-      color: white;
-      border-color: var(--red);
-    }
-
-    .map-frame {
-      background: var(--white);
-      border: 1px solid var(--line);
-      padding: 9px;
-      border-radius: 5px;
-      box-shadow: 0 12px 35px rgba(45, 39, 25, .06);
-    }
-
-    #map {
-      width: 100%;
-      height: min(64vh, 610px);
-      min-height: 390px;
-      background: #eae7dc;
-    }
-
-    .map-caption {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      padding: 12px 4px 3px;
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .below-map {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    .info-card {
-      background: var(--white);
-      border: 1px solid var(--line);
-      padding: 21px;
-    }
-
-    .info-card h2 {
-      font: 600 20px "Playfair Display", Georgia, serif;
-      margin: 0 0 12px;
-    }
-
-    .info-card p,
-    .info-card li {
-      font-size: 12px;
-      color: #66675f;
-      line-height: 1.8;
-    }
-
-    .info-card ul {
-      padding-left: 17px;
-      margin-bottom: 0;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      margin: 10px 0;
-      font-size: 12px;
-    }
-
-    .legend-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: var(--red);
-      border: 2px solid white;
-      box-shadow: 0 0 0 1px var(--red);
-    }
-
-    .legend-diamond {
-  width: 11px;
-  height: 11px;
-  background: var(--olive);
-  transform: rotate(45deg);
-  display: inline-block;
-  margin: 0 2px;
-}
-
-    footer {
-      border-top: 1px solid var(--line);
-      padding: 23px 6%;
-      text-align: center;
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-    
-
-    /* Custom Leaflet markers */
-
-    .album-marker {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 27px;
-      height: 27px;
-      border-radius: 50%;
-      background: var(--red);
-      color: white;
-      border: 3px solid #fffefa;
-      box-shadow: 0 2px 8px #34251f55;
-      font: 700 11px "DM Sans", sans-serif;
-      transition: transform .2s;
-    }
-
-    .album-marker:hover {
-      transform: scale(1.18);
-    }
-
-    .leaflet-popup-content-wrapper {
-      background: #fffefa;
-      border-radius: 4px;
-      box-shadow: 0 5px 25px #292d2b22;
-    }
-
-    .leaflet-popup-content {
-      margin: 17px;
-      min-width: 180px;
-      font-family: "DM Sans", sans-serif;
-      line-height: 1.6;
-    }
-
-    .popup-year {
-      color: var(--red);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 700;
-    }
-
-    .popup-title {
-      font: 600 20px "Playfair Display", Georgia, serif;
-      margin: 5px 0;
-    }
-
-    .popup-text {
-      font-size: 12px;
-      color: #66675f;
-    }
-
-    .popup-theme {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 4px 7px;
-      background: #f2e8dc;
-      color: #864238;
-      font-size: 10px;
-      border-radius: 3px;
-    }
-
-    @media (max-width: 650px) {
-      .hero {
-        padding-top: 30px;
-      }
-
-      .workspace {
-        padding-left: 4%;
-        padding-right: 4%;
-      }
-
-      .below-map {
-        grid-template-columns: 1fr;
-      }
-
-      #map {
-        min-height: 420px;
-        height: 60vh;
-      }
-
-      .stats {
-        gap: 20px;
-      }
-    }
-    /* Real-world locations: circular markers */
-.album-marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  background: var(--red);
-  color: white;
-  border: 3px solid #fffefa;
-  box-shadow: 0 2px 8px #34251f55;
-  font: 700 11px "DM Sans", sans-serif;
-}
-
-/* Fictional locations: diamond-shaped markers */
-.album-marker.fictional-marker {
-  border-radius: 3px;
-  background: var(--olive);
-  transform: rotate(45deg) scale(0.85);
-}
-
-/* Keep the number upright inside the diamond */
-.album-marker.fictional-marker span {
-  transform: rotate(-45deg);
-}
-
-/* Hover effect for both marker types */
-.album-marker:hover {
-  filter: brightness(1.15);
-}
   </style>
 </head>
 
@@ -376,28 +86,16 @@
 
   <section class="hero">
     <div class="eyebrow">Tintin’s Travel · Interactive Atlas</div>
-
     <h1>Tintin’s Travel</h1>
-
     <p class="intro">
       Mapping movement, modernity and the geography of adventure
       across Hergé's comic-book world. Explore the places, journeys
       and cultural encounters that shape Tintin's adventures.
     </p>
-
     <div class="stats">
-      <div class="stat">
-        <strong id="location-count">4</strong>
-        <span>Mapped entries</span>
-      </div>
-      <div class="stat">
-        <strong>1929–1976</strong>
-        <span>Album era</span>
-      </div>
-      <div class="stat">
-        <strong>01</strong>
-        <span>Travel atlas</span>
-      </div>
+      <div class="stat"><strong id="location-count">0</strong><span>Mapped entries</span></div>
+      <div class="stat"><strong>1929–1976</strong><span>Album era</span></div>
+      <div class="stat"><strong>01</strong><span>Travel atlas</span></div>
     </div>
   </section>
 
@@ -405,7 +103,6 @@
 
     <div class="toolbar">
       <div class="toolbar-label">Explore by theme</div>
-
       <div class="filters" id="filters">
         <button class="filter active" data-theme="all">All locations</button>
         <button class="filter" data-theme="travel">Travel</button>
@@ -415,6 +112,12 @@
       </div>
     </div>
 
+    <div class="journey">
+      <button class="play" id="play">▶ Play journey</button>
+      <input type="range" id="slider" min="1" value="1" aria-label="Number of albums shown">
+      <span id="slider-label"></span>
+    </div>
+
     <div class="map-frame">
       <div id="map"></div>
       <div class="map-caption">
@@ -422,9 +125,9 @@
         <span>Pan and zoom to explore geographical contexts</span>
       </div>
     </div>
+    <div id="offmap"></div>
 
     <section class="below-map">
-
       <article class="info-card">
         <h2>Reading the map</h2>
         <p>
@@ -440,19 +143,8 @@
 
       <article class="info-card">
         <h2>Map legend</h2>
-        <div class="legend-item">
-          <span class="legend-dot"></span>
-          <span>Album and geographical setting</span>
-        </div>
-        <div class="legend-item">
-  <span class="legend-dot"></span>
-  <span>Real-world location</span>
-</div>
-
-<div class="legend-item">
-  <span class="legend-diamond"></span>
-  <span>Fictional location</span>
-</div>
+        <div class="legend-item"><span class="legend-dot"></span><span>Real-world location</span></div>
+        <div class="legend-item"><span class="legend-diamond"></span><span>Fictional location</span></div>
         <p>
           Themes are assigned to albums for exploratory purposes.
           Refine them as your textual analysis develops.
@@ -463,40 +155,29 @@
           <li>Modernity — technology and social change</li>
         </ul>
       </article>
-
     </section>
   </main>
 
   <footer>
     Explore the places, journeys and cultural encounters in Tintin’s adventures.<br>
-    Map data © OpenStreetMap contributors · Map powered by Leaflet.
+    Map data © OpenStreetMap contributors © CARTO · Map powered by Leaflet.
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Initialise the world map.
-    const map = L.map("map", {
-      zoomControl: false,
-      minZoom: 2
-    }).setView([25, 35], 2);
-
+    // ---------- Map ----------
+    const map = L.map("map", { zoomControl: false, minZoom: 2, worldCopyJump: true }).setView([25, 35], 2);
     L.control.zoom({ position: "topright" }).addTo(map);
 
-    // Standard OpenStreetMap tiles: no API key required.
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
 
-    L.tileLayer(
-  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }
-).addTo(map);
-
-    // Starter dataset. Add more albums as your research grows.
-    // Coordinates represent cities or approximate regional contexts.
-  const albums = [
+    // ---------- Data ----------
+    // Albums with lat/lng set to null cannot be plotted (e.g. the Moon); they are listed under the map instead.
+   const albums = [
   {
     title: "Tintin in the Land of the Soviets",
     year: "1930",
@@ -507,6 +188,7 @@
     fictional: false,
     note: "The first departure: a reporter sent abroad. The template every later album repeats."
   },
+
   {
     title: "Tintin in the Congo",
     year: "1931",
@@ -517,6 +199,7 @@
     fictional: false,
     note: "Colonial setting by an ‘armchair traveller’. The series’ most criticised album for its colonial representation."
   },
+
   {
     title: "Tintin in America",
     year: "1932",
@@ -527,6 +210,7 @@
     fictional: false,
     note: "Gangster iconography and Chaplin/Keaton-style gags. Drawn Cinema, Case Study I."
   },
+
   {
     title: "Cigars of the Pharaoh",
     year: "1934",
@@ -537,6 +221,7 @@
     fictional: false,
     note: "Disguise and conspiracy borrowed from French silent serials. Drawn Cinema, Case Study II."
   },
+
   {
     title: "The Blue Lotus",
     year: "1936",
@@ -547,6 +232,7 @@
     fictional: false,
     note: "Research-based realism after Hergé’s meeting with Chang. Ligne claire matures."
   },
+
   {
     title: "The Broken Ear",
     year: "1937",
@@ -555,9 +241,9 @@
     lng: -62,
     themes: ["travel", "colonialism"],
     fictional: true,
-    note: "Invented geography enters the series. The country returns in Tintin and the Picaros.",
-    
+    note: "Invented geography enters the series. The country returns in Tintin and the Picaros."
   },
+
   {
     title: "The Black Island",
     year: "1938",
@@ -568,17 +254,18 @@
     fictional: false,
     note: "A pursuit structure across modern transport: plane, train, boat."
   },
+
   {
     title: "King Ottokar’s Sceptre",
     year: "1939",
-    place: "Syldavia (fictional) ",
+    place: "Syldavia (fictional)",
     lat: 44.2,
     lng: 21,
     themes: ["travel", "politics", "technology"],
     fictional: true,
-    note: "A fictional kingdom that later hosts the rocket launch in Destination Moon.",
-    
+    note: "A fictional kingdom that later hosts the rocket launch in Destination Moon."
   },
+
   {
     title: "The Crab with the Golden Claws",
     year: "1941",
@@ -589,6 +276,7 @@
     fictional: false,
     note: "Drawn Cinema, Case Study III: cross-cutting and rhythm control. Haddock arrives."
   },
+
   {
     title: "The Shooting Star",
     year: "1942",
@@ -597,9 +285,9 @@
     lng: -15,
     themes: ["travel", "technology"],
     fictional: false,
-    note: "A race to a fallen meteorite; apocalyptic anxiety in the occupation years.",
-    
+    note: "A race to a fallen meteorite; apocalyptic anxiety in the occupation years."
   },
+
   {
     title: "The Secret of the Unicorn",
     year: "1943",
@@ -607,8 +295,10 @@
     lat: 50.85,
     lng: 4.35,
     themes: ["travel", "modernity"],
+    fictional: false,
     note: "A mystery that starts in a city market. The journey begins at home."
   },
+
   {
     title: "Red Rackham’s Treasure",
     year: "1944",
@@ -617,9 +307,9 @@
     lng: -62,
     themes: ["travel", "technology"],
     fictional: true,
-    note: "A treasure hunt that ends with Marlinspike Hall, the series’ domestic anchor.",
-    
+    note: "A treasure hunt that ends with Marlinspike Hall, the series’ domestic anchor."
   },
+
   {
     title: "The Seven Crystal Balls",
     year: "1948",
@@ -630,6 +320,7 @@
     fictional: false,
     note: "Nightmare imagery echoing Griffith’s film, as argued in Drawn Cinema."
   },
+
   {
     title: "Prisoners of the Sun",
     year: "1949",
@@ -640,6 +331,7 @@
     fictional: false,
     note: "A descent into an Inca world; the journey as encounter with the ancient and modern."
   },
+
   {
     title: "Land of Black Gold",
     year: "1950",
@@ -649,8 +341,8 @@
     themes: ["travel", "modernity", "technology"],
     fictional: true,
     note: "Oil, fuel and desert travel; invented Middle Eastern geography."
-    
   },
+
   {
     title: "Destination Moon",
     year: "1953",
@@ -658,10 +350,10 @@
     lat: 44.6,
     lng: 21.4,
     themes: ["travel", "modernity", "technology"],
-     fictional: true,
-    note: "Cold War scientific modernity. The rocket as a ‘performative object’.",
-   
+    fictional: true,
+    note: "Cold War scientific modernity. The rocket as a ‘performative object’."
   },
+
   {
     title: "Explorers on the Moon",
     year: "1954",
@@ -669,10 +361,10 @@
     lat: null,
     lng: null,
     themes: ["travel", "modernity", "technology"],
-    fictional: true
-    note: "The journey leaves the map altogether.",
-    
+    fictional: true,
+    note: "The journey leaves the map altogether."
   },
+
   {
     title: "The Calculus Affair",
     year: "1956",
@@ -683,6 +375,7 @@
     fictional: false,
     note: "Cold War espionage; Thomson and Thompson’s umbrella routine as absurd comedy."
   },
+
   {
     title: "The Red Sea Sharks",
     year: "1958",
@@ -693,6 +386,7 @@
     fictional: false,
     note: "Earlier characters and places return, a recycling of the series’ own world."
   },
+
   {
     title: "Tintin in Tibet",
     year: "1960",
@@ -703,6 +397,7 @@
     fictional: false,
     note: "An expedition driven by friendship rather than conflict. The most personal album."
   },
+
   {
     title: "The Castafiore Emerald",
     year: "1963",
@@ -713,6 +408,7 @@
     fictional: false,
     note: "The ‘journey’ album where nobody leaves home. Suspense without movement: a test case for the absurd."
   },
+
   {
     title: "Flight 714 to Sydney",
     year: "1968",
@@ -723,6 +419,7 @@
     fictional: false,
     note: "Air travel as routine; a stopover turns into captivity."
   },
+
   {
     title: "Tintin and the Picaros",
     year: "1976",
@@ -732,101 +429,128 @@
     themes: ["travel", "colonialism", "politics"],
     fictional: true,
     note: "The last completed album returns to San Theodoros: evidence for the cyclical argument."
-    
   }
 ];
 
-    const markers = [];
+    // ---------- Markers ----------
+    const markers = [];   // { marker (or null), album, index }
 
-    // Create a custom circular marker for real countries.
     albums.forEach((album, index) => {
-      const markerClass = album.fictional
-  ? "fictional-marker"
-  : "real-marker";
+      let marker = null;
 
-const icon = L.divIcon({
-  className: "",
-  html: `
-    <div class="album-marker ${markerClass}">
-      <span>${index + 1}</span>
-    </div>
-  `,
-  iconSize: [27, 27],
-  iconAnchor: [13, 13]
-});
-
-      const marker = L.marker([album.lat, album.lng], {
-        icon: icon,
-        title: album.title
-      });
-
-      const themeLabels = album.themes
-        .map(theme => theme.charAt(0).toUpperCase() + theme.slice(1))
-        .join(" · ");
-
-      marker.bindPopup(`
-        <div class="popup-year">${album.year} · Album entry</div>
-        <div class="popup-title">${album.title}</div>
-        <div class="popup-text"><b>Setting:</b> ${album.place}</div>
-        <div class="popup-text" style="margin-top:8px">
-          ${album.note}
-        </div>
-        <div class="popup-theme">${themeLabels}</div>
-      `);
-
-      marker.addTo(map);
-      markers.push({ marker, album });
-    });
-
-    // Update the visible markers when a theme is selected.
-    const filterButtons = document.querySelectorAll(".filter");
-
-    filterButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        filterButtons.forEach(item => item.classList.remove("active"));
-        button.classList.add("active");
-
-        const selectedTheme = button.dataset.theme;
-        let visibleCount = 0;
-
-        markers.forEach(({ marker, album }) => {
-          const matches =
-            selectedTheme === "all" ||
-            album.themes.includes(selectedTheme);
-
-          if (matches) {
-            if (!map.hasLayer(marker)) marker.addTo(map);
-            visibleCount++;
-          } else {
-            if (map.hasLayer(marker)) map.removeLayer(marker);
-          }
+      // Only create a marker when the album has real coordinates.
+      if (album.lat !== null && album.lng !== null) {
+        const icon = L.divIcon({
+          className: "",
+          html: `<div class="album-marker ${album.fictional ? "fictional-marker" : "real-marker"}"><span>${index + 1}</span></div>`,
+          iconSize: [27, 27],
+          iconAnchor: [13, 13]
         });
 
-        document.getElementById("location-count").textContent =
-          visibleCount;
+        marker = L.marker([album.lat, album.lng], { icon: icon, title: album.title });
+
+        const themeLabels = album.themes
+          .map(t => t.charAt(0).toUpperCase() + t.slice(1))
+          .join(" · ");
+
+        marker.bindPopup(`
+          <div class="popup-year">${album.year} · Album ${index + 1}</div>
+          <div class="popup-title">${album.title}</div>
+          <div class="popup-text"><b>Setting:</b> ${album.place}</div>
+          <div class="popup-text" style="margin-top:8px">${album.note}</div>
+          <div class="popup-theme">${themeLabels}</div>
+        `);
+      }
+
+      markers.push({ marker, album, index });
+    });
+
+    // Dashed line joining the albums in publication order.
+    const path = L.polyline([], { color: "#b64035", weight: 1.5, dashArray: "4 7", opacity: 0.55 }).addTo(map);
+
+    // ---------- State and update ----------
+    const slider = document.getElementById("slider");
+    const sliderLabel = document.getElementById("slider-label");
+    const playButton = document.getElementById("play");
+    const offmap = document.getElementById("offmap");
+
+    let selectedTheme = "all";
+    let limit = albums.length;   // how many albums (in order) are currently shown
+    let timer = null;
+
+    slider.max = albums.length;
+    slider.value = limit;
+
+    function update() {
+      const points = [];
+      let count = 0;
+      let offHtml = "";
+
+      markers.forEach(({ marker, album, index }) => {
+        const show = index < limit && (selectedTheme === "all" || album.themes.includes(selectedTheme));
+
+        if (marker) {
+          if (show) {
+            if (!map.hasLayer(marker)) marker.addTo(map);
+            points.push([album.lat, album.lng]);
+            count++;
+          } else if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+          }
+        } else if (show) {
+          offHtml += `<div><b>Off the map:</b> ${index + 1}. ${album.title} (${album.year}) — ${album.note}</div>`;
+        }
+      });
+
+      path.setLatLngs(points);
+      offmap.innerHTML = offHtml;
+      document.getElementById("location-count").textContent = count;
+
+      const current = albums[limit - 1];
+      sliderLabel.textContent = `Showing albums 1–${limit} · up to ${current.title} (${current.year})`;
+    }
+
+    // Theme filters
+    const filterButtons = document.querySelectorAll(".filter");
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        filterButtons.forEach(b => b.classList.remove("active"));
+        button.classList.add("active");
+        selectedTheme = button.dataset.theme;
+        update();
       });
     });
 
-    // Keep the map correctly sized if its container changes.
+    // Slider
+    slider.addEventListener("input", () => {
+      stopPlaying();
+      limit = Number(slider.value);
+      update();
+    });
+
+    // Play journey
+    function stopPlaying() {
+      if (timer) { clearInterval(timer); timer = null; }
+      playButton.textContent = "▶ Play journey";
+    }
+
+    playButton.addEventListener("click", () => {
+      if (timer) { stopPlaying(); return; }
+      limit = 1;
+      slider.value = 1;
+      update();
+      playButton.textContent = "⏸ Pause";
+      timer = setInterval(() => {
+        if (limit >= albums.length) { stopPlaying(); return; }
+        limit++;
+        slider.value = limit;
+        update();
+      }, 1100);
+    });
+
+    update();
     setTimeout(() => map.invalidateSize(), 200);
-
-// Slider and play
-const slider = document.getElementById('slider');
-slider.max = A.length;
-slider.oninput = ()=>{ limit = +slider.value; render(); };
-document.getElementById('play').onclick = function(){
-  if(timer){ clearInterval(timer); timer=null; this.textContent='▶ Play journey'; return; }
-  limit = 1; slider.value = 1; render();
-  this.textContent='⏸ Pause';
-  timer = setInterval(()=>{
-    if(limit>=A.length){ clearInterval(timer); timer=null; document.getElementById('play').textContent='▶ Play journey'; return; }
-    limit++; slider.value=limit; render();
-  }, 1100);
-};
-
   </script>
-
-
 
 </body>
 </html>
