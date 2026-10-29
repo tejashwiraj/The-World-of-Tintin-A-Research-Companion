@@ -1,2 +1,2 @@
-# Tintin-Digital-Humanities-Project
-A DH project on Tintin comic
+# The-World-of-Tintin-A-Research-Companion
+A Research Companion On Tintin's MA dissertation Project
