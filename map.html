@@ -1,560 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tintin's Travel</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root{--paper:#f7f4ec;--white:#fffefa;--ink:#292d2b;--muted:#77786f;--red:#b64035;--line:#e4dfd4;--olive:#777d59}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif}
-    .topbar{padding:15px 6%;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}
-    .brand{font-weight:700;letter-spacing:1.5px;font-size:13px}
-    .brand span{color:var(--red)}
-    .back-link{text-decoration:none;color:var(--ink);font-size:13px}
-    .hero{padding:43px 6% 27px;max-width:1150px;margin:auto}
-    .eyebrow{color:var(--red);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
-    h1{font-family:"Playfair Display",Georgia,serif;font-size:clamp(34px,5vw,55px);line-height:1.12;font-weight:500;margin:12px 0}
-    .intro{color:#65665e;line-height:1.8;max-width:680px;font-size:14px}
-    .stats{display:flex;gap:30px;margin-top:24px;flex-wrap:wrap}
-    .stat strong{display:block;font-family:"Playfair Display",Georgia,serif;font-size:25px;font-weight:500}
-    .stat span{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
-    .workspace{max-width:none;width:100%;margin:0 auto;padding:0 2.5% 45px}
-    .toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
-    .toolbar-label{font-size:11px;text-transform:uppercase;letter-spacing:1.3px;font-weight:700}
-    .filters{display:flex;gap:7px;flex-wrap:wrap}
-    .filter{background:transparent;border:1px solid #d8d2c6;border-radius:30px;padding:9px 13px;cursor:pointer;font:inherit;font-size:11px;color:var(--ink);transition:.2s}
-    .filter:hover,.filter.active{background:var(--red);color:#fff;border-color:var(--red)}
-
-    /* Journey controls */
-    .journey{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px;margin-bottom:14px}
-    .play{background:var(--ink);color:#fff;border:0;border-radius:30px;padding:9px 18px;font:inherit;font-size:11px;font-weight:600;cursor:pointer}
-    .play:hover{background:var(--red)}
-    #slider{width:220px;accent-color:var(--red)}
-    #slider-label{font-size:12px;color:var(--muted)}
-
-    .map-frame{width:100%;background:var(--white);border:1px solid var(--line);padding:8px;border-radius:5px;box-shadow:0 12px 35px rgba(45,39,25,.08)}
-    #map{width:100%;height:78vh;min-height:520px;max-height:900px;background:#eee8d9}
-    /* A gentle vintage tint changes the tile colours without affecting markers or controls. */
-    .leaflet-tile-pane{filter:sepia(12%) saturate(88%) hue-rotate(5deg) brightness(1.025)}
-    .map-caption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 4px 3px;font-size:10px;color:var(--muted)}
-    #offmap{margin-top:10px;font-size:12px;color:#66675f;line-height:1.7}
-    #offmap:empty{display:none}
-
-    .below-map{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
-    .info-card{background:var(--white);border:1px solid var(--line);padding:21px}
-    .info-card h2{font:600 20px "Playfair Display",Georgia,serif;margin:0 0 12px}
-    .info-card p,.info-card li{font-size:12px;color:#66675f;line-height:1.8}
-    .info-card ul{padding-left:17px;margin-bottom:0}
-    .legend-item{display:flex;align-items:center;gap:9px;margin:10px 0;font-size:12px}
-    .legend-dot{width:11px;height:11px;border-radius:50%;background:var(--red);border:2px solid #fff;box-shadow:0 0 0 1px var(--red)}
-    .legend-diamond{width:11px;height:11px;background:var(--olive);transform:rotate(45deg);display:inline-block;margin:0 2px}
-    footer{border-top:1px solid var(--line);padding:23px 6%;text-align:center;font-size:11px;color:var(--muted);line-height:1.8}
-
-    /* Markers */
-    .album-marker{display:flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:var(--red);color:#fff;border:3px solid #fffefa;box-shadow:0 2px 8px #34251f55;font:700 11px "DM Sans",sans-serif;transition:filter .2s}
-    .album-marker:hover{filter:brightness(1.15)}
-    .album-marker.fictional-marker{border-radius:3px;background:var(--olive);transform:rotate(45deg) scale(.85)}
-    .album-marker.fictional-marker span{transform:rotate(-45deg)}
-
-    /* Popups */
-    .leaflet-popup-content-wrapper{background:#fffefa;border-radius:4px;box-shadow:0 5px 25px #292d2b22}
-    .leaflet-popup-content{margin:17px;min-width:180px;font-family:"DM Sans",sans-serif;line-height:1.6}
-    .popup-year{color:var(--red);font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
-    .popup-title{font:600 20px "Playfair Display",Georgia,serif;margin:5px 0}
-    .popup-text{font-size:12px;color:#66675f}
-    .popup-theme{display:inline-block;margin-top:8px;padding:4px 7px;background:#f2e8dc;color:#864238;font-size:10px;border-radius:3px}
-
-    @media (max-width:650px){
-      .hero{padding-top:30px}
-      .workspace{padding-left:4%;padding-right:4%}
-      .below-map{grid-template-columns:1fr}
-      #map{min-height:460px;height:68vh}
-      .stats{gap:20px}
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tintin's Travel · Interactive Atlas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f7f4ec;--white:#fffefa;--ink:#292d2b;--muted:#77786f;--red:#b64035;--line:#e4dfd4;--olive:#777d59}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif}
+.topbar{padding:14px 4%;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:700;letter-spacing:1.5px;font-size:13px}.brand span{color:var(--red)}
+.back-link{text-decoration:none;color:var(--ink);font-size:13px}
+.hero{padding:28px 4% 12px;max-width:1300px;margin:auto}
+.eyebrow{color:var(--red);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+h1{font:500 clamp(30px,4.5vw,48px)/1.1 "Playfair Display",Georgia,serif;margin:10px 0}
+.intro{color:#65665e;line-height:1.7;max-width:700px;font-size:14px;margin:0}
+.stats{display:flex;gap:28px;margin-top:18px;flex-wrap:wrap}
+.stat strong{display:block;font:500 25px "Playfair Display",serif}
+.stat span{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.workspace{max-width:1300px;margin:auto;padding:0 4% 40px}
+.controls{background:var(--white);border:1px solid var(--line);padding:14px;margin-bottom:12px;display:grid;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.lab{font-size:10px;text-transform:uppercase;letter-spacing:1.3px;font-weight:700;min-width:72px}
+.chip{background:transparent;border:1px solid #d8d2c6;border-radius:30px;padding:7px 12px;cursor:pointer;font:inherit;font-size:11px;color:var(--ink);transition:.2s}
+.chip:hover,.chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.chip.olive.on,.chip.olive:hover{background:var(--olive);border-color:var(--olive)}
+#search{border:1px solid #d8d2c6;border-radius:30px;padding:8px 14px;font:inherit;font-size:12px;width:230px;background:var(--paper)}
+.play{background:var(--ink);color:#fff;border:0;border-radius:30px;padding:9px 18px;font:600 11px "DM Sans",sans-serif;cursor:pointer}
+.play:hover{background:var(--red)}
+#slider{width:200px;accent-color:var(--red)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+.map-frame{background:var(--white);border:1px solid var(--line);padding:8px;border-radius:5px;box-shadow:0 12px 35px rgba(45,39,25,.08)}
+#map{height:74vh;min-height:500px;background:#eee8d9}
+.cap{font-size:10px;color:var(--muted);padding:8px 4px 2px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.panel{background:var(--white);border:1px solid var(--line);padding:18px;position:sticky;top:10px;max-height:82vh;overflow:auto}
+.panel h2{font:600 21px "Playfair Display",serif;margin:4px 0 8px}
+.yr{color:var(--red);font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.panel p{font-size:12.5px;line-height:1.7;color:#66675f;margin:8px 0}
+.tag{display:inline-block;margin:2px 3px 2px 0;padding:3px 8px;background:#f2e8dc;color:#864238;font-size:10px;border-radius:3px}
+.tag.ph{background:#e6e8d8;color:#59603f}
+.stops{list-style:none;padding:0;margin:8px 0}
+.stops li{font-size:12px;padding:6px 8px;border-left:3px solid var(--red);margin:4px 0;background:var(--paper);cursor:pointer}
+.stops li.f{border-color:var(--olive)}.stops li:hover{background:#efe9da}
+.nav{display:flex;gap:8px;margin-top:12px}
+.nav button{flex:1}
+.ctx{border-left:3px solid var(--olive);padding-left:10px;font-style:italic}
+.bars{margin-top:14px}
+.bar{display:flex;align-items:center;gap:8px;font-size:11px;margin:6px 0}
+.bar b{width:62px;font-weight:600}
+.track{flex:1;height:10px;display:flex;background:#eee;border-radius:5px;overflow:hidden}
+.track i{display:block;height:100%}
+.hint{font-size:11px;color:var(--muted)}
+#offmap{margin-top:10px;font-size:12px;color:#66675f;line-height:1.7}#offmap:empty{display:none}
+.m{display:flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:var(--red);color:#fff;border:3px solid #fffefa;box-shadow:0 2px 8px #34251f55;font:700 11px "DM Sans",sans-serif}
+.m.f{border-radius:3px;background:var(--olive);transform:rotate(45deg) scale(.85)}.m.f span{transform:rotate(-45deg)}
+.m.sel{outline:3px solid #292d2b;outline-offset:2px}
+.leaflet-tooltip{font:600 11px "DM Sans",sans-serif}
+.err{padding:30px;font-size:14px;color:var(--red)}
+footer{border-top:1px solid var(--line);padding:20px 4%;text-align:center;font-size:11px;color:var(--muted);line-height:1.8}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.panel{position:static;max-height:none}#map{height:60vh}}
+</style>
 </head>
-
 <body>
+<header class="topbar"><div class="brand">TINTIN’S <span>TRAVEL</span></div><a class="back-link" href="index.html">← Back to Tintin’s Travel</a></header>
 
-  <header class="topbar">
-    <div class="brand">TINTIN’S <span>TRAVEL</span></div>
-    <a class="back-link" href="index.html">← Back to Tintin’s Travel</a>
-  </header>
+<section class="hero">
+  <div class="eyebrow">Interactive Atlas · Research Companion</div>
+  <h1>Tintin’s Travel</h1>
+  <p class="intro">Mapping the real and the invented across Hergé’s 24 albums. Click an album to trace its route, filter by era, theme or fictional nation, search places, or play the whole journey.</p>
+  <div class="stats">
+    <div class="stat"><strong id="s-alb">0</strong><span>Albums shown</span></div>
+    <div class="stat"><strong id="s-real">0</strong><span>Real places</span></div>
+    <div class="stat"><strong id="s-fic">0</strong><span>Imaginary places</span></div>
+    <div class="stat"><strong id="s-pct">0%</strong><span>Imaginary share</span></div>
+    <div class="stat"><strong>1929–1986</strong><span>Album era</span></div>
+  </div>
+</section>
 
-  <section class="hero">
-    <div class="eyebrow">Tintin’s Travel · Interactive Atlas</div>
-    <h1>Tintin’s Travel</h1>
-    <p class="intro">
-      Mapping movement, modernity and the geography of adventure
-      across Hergé's comic-book world. Explore the places, journeys
-      and cultural encounters that shape Tintin's adventures.
-    </p>
-    <div class="stats">
-      <div class="stat"><strong id="location-count">0</strong><span>Mapped entries</span></div>
-      <div class="stat"><strong>1929–1976</strong><span>Album era</span></div>
-      <div class="stat"><strong>01</strong><span>Travel atlas</span></div>
-    </div>
-  </section>
-
-  <main class="workspace">
-
-    <div class="toolbar">
-      <div class="toolbar-label">Explore by theme</div>
-      <div class="filters" id="filters">
-        <button class="filter active" data-theme="all">All locations</button>
-        <button class="filter" data-theme="travel">Travel</button>
-        <button class="filter" data-theme="colonialism">Colonialism</button>
-        <button class="filter" data-theme="modernity">Modernity</button>
-        <button class="filter" data-theme="technology">Technology</button>
-      </div>
-    </div>
-
-    <div class="journey">
+<main class="workspace">
+  <div class="controls">
+    <div class="row"><span class="lab">Search</span><input id="search" placeholder="Album or place, e.g. Syldavia, Lima…" aria-label="Search">
       <button class="play" id="play">▶ Play journey</button>
-      <input type="range" id="slider" min="1" value="1" aria-label="Number of albums shown">
-      <span id="slider-label"></span>
+      <input type="range" id="slider" min="1" aria-label="Albums shown"><span class="hint" id="sl-label"></span></div>
+    <div class="row"><span class="lab">Era</span><div id="f-phase" class="row"></div></div>
+    <div class="row"><span class="lab">Theme</span><div id="f-theme" class="row"></div></div>
+    <div class="row"><span class="lab">Fictional nation</span><div id="f-nat" class="row"></div></div>
+    <div class="row"><span class="lab">Layers</span>
+      <button class="chip on" id="t-real">● Real places</button>
+      <button class="chip olive on" id="t-fic">◆ Imaginary places</button>
+      <button class="chip on" id="t-path">Publication path</button>
+      <button class="chip" id="t-home">Belgium home-anchor</button>
+      <button class="chip" id="reset">Reset all</button></div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="map-frame"><div id="map"></div>
+        <div class="cap"><span>Click a marker · use ← → keys to move between albums</span><span>Red circle = real · green diamond = imaginary</span></div></div>
+      <div id="offmap"></div>
     </div>
+    <aside class="panel" id="panel"></aside>
+  </div>
+</main>
+<footer>Regional markers are approximate research references, not claims that every scene occurs at the plotted point.<br>Map data © OpenStreetMap contributors · Map powered by Leaflet.</footer>
 
-    <div class="map-frame">
-      <div id="map"></div>
-      <div class="map-caption">
-        <span>SELECT A MARKER TO EXPLORE AN ALBUM</span>
-        <span>Pan and zoom to explore geographical contexts</span>
-      </div>
-    </div>
-    <div id="offmap"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+if(typeof L==="undefined"){$("map").innerHTML='<div class="err">The map library (Leaflet) could not be loaded. Check your internet connection and reload the page.</div>';return;}
 
-    <section class="below-map">
-      <article class="info-card">
-        <h2>Reading the map</h2>
-        <p>
-          Each marker connects an album to a geographical setting.
-          The map can help investigate how travel, movement,
-          cultural encounters and technology organise Tintin's world.
-        </p>
-        <p>
-          Regional markers are approximate research references,
-          not claims that every scene occurs at the plotted point.
-        </p>
-      </article>
-
-      <article class="info-card">
-        <h2>Map legend</h2>
-        <div class="legend-item"><span class="legend-dot"></span><span>Real-world location</span></div>
-        <div class="legend-item"><span class="legend-diamond"></span><span>Fictional location</span></div>
-        <p>
-          Themes are assigned to albums for exploratory purposes.
-          Refine them as your textual analysis develops.
-        </p>
-        <ul>
-          <li>Travel — movement and exploration</li>
-          <li>Colonialism — representation and power</li>
-          <li>Modernity — technology and social change</li>
-        </ul>
-      </article>
-    </section>
-  </main>
-
-  <footer>
-    Explore the places, journeys and cultural encounters in Tintin’s adventures.<br>
-    Map data © OpenStreetMap contributors © CARTO · Map powered by Leaflet.
-  </footer>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script>
-    // ---------- Map ----------
-    const map = L.map("map", { zoomControl: false, minZoom: 2.5, maxZoom: 19, zoomSnap: 0.5, zoomDelta: 0.5, worldCopyJump: true }).setView([25, 35], 2.5);
-    L.control.zoom({ position: "topright" }).addTo(map);
-
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-
-    // ---------- Data ----------
-    // Albums with lat/lng set to null cannot be plotted (e.g. the Moon); they are listed under the map instead.
-   const albums = [
-  {
-    title: "Tintin in the Land of the Soviets",
-    year: "1930",
-    place: "Moscow, USSR",
-    lat: 55.75,
-    lng: 37.62,
-    themes: ["travel", "modernity"],
-    fictional: false,
-    note: "The first departure: a reporter sent abroad. The template every later album repeats."
-  },
-
-  {
-    title: "Tintin in the Congo",
-    year: "1931",
-    place: "Belgian Congo",
-    lat: -4.3,
-    lng: 15.3,
-    themes: ["travel", "colonialism"],
-    fictional: false,
-    note: "Colonial setting by an ‘armchair traveller’. The series’ most criticised album for its colonial representation."
-  },
-
-  {
-    title: "Tintin in America",
-    year: "1932",
-    place: "Chicago and the American West",
-    lat: 41.88,
-    lng: -87.63,
-    themes: ["travel", "modernity"],
-    fictional: false,
-    note: "Gangster iconography and Chaplin/Keaton-style gags. Drawn Cinema, Case Study I."
-  },
-
-  {
-    title: "Cigars of the Pharaoh",
-    year: "1934",
-    place: "Egypt, the Arabian desert, India",
-    lat: 26.82,
-    lng: 30.8,
-    themes: ["travel", "colonialism"],
-    fictional: false,
-    note: "Disguise and conspiracy borrowed from French silent serials. Drawn Cinema, Case Study II."
-  },
-
-  {
-    title: "The Blue Lotus",
-    year: "1936",
-    place: "Shanghai, China",
-    lat: 31.23,
-    lng: 121.47,
-    themes: ["travel", "colonialism", "modernity"],
-    fictional: false,
-    note: "Research-based realism after Hergé’s meeting with Chang. Ligne claire matures."
-  },
-
-  {
-    title: "The Broken Ear",
-    year: "1937",
-    place: "San Theodoros (fictional)",
-    lat: -12,
-    lng: -62,
-    themes: ["travel", "colonialism"],
-    fictional: true,
-    note: "Invented geography enters the series. The country returns in Tintin and the Picaros."
-  },
-
-  {
-    title: "The Black Island",
-    year: "1938",
-    place: "Britain and a Scottish island",
-    lat: 56.5,
-    lng: -4.2,
-    themes: ["travel", "technology"],
-    fictional: false,
-    note: "A pursuit structure across modern transport: plane, train, boat."
-  },
-
-  {
-    title: "King Ottokar’s Sceptre",
-    year: "1939",
-    place: "Syldavia (fictional)",
-    lat: 44.2,
-    lng: 21,
-    themes: ["travel", "politics", "technology"],
-    fictional: true,
-    note: "A fictional kingdom that later hosts the rocket launch in Destination Moon."
-  },
-
-  {
-    title: "The Crab with the Golden Claws",
-    year: "1941",
-    place: "Atlantic, Morocco and the Sahara",
-    lat: 31,
-    lng: -6.5,
-    themes: ["travel", "colonialism", "technology"],
-    fictional: false,
-    note: "Drawn Cinema, Case Study III: cross-cutting and rhythm control. Haddock arrives."
-  },
-
-  {
-    title: "The Shooting Star",
-    year: "1942",
-    place: "Arctic Ocean",
-    lat: 70,
-    lng: -15,
-    themes: ["travel", "technology"],
-    fictional: false,
-    note: "A race to a fallen meteorite; apocalyptic anxiety in the occupation years."
-  },
-
-  {
-    title: "The Secret of the Unicorn",
-    year: "1943",
-    place: "Brussels, Belgium",
-    lat: 50.85,
-    lng: 4.35,
-    themes: ["travel", "modernity"],
-    fictional: false,
-    note: "A mystery that starts in a city market. The journey begins at home."
-  },
-
-  {
-    title: "Red Rackham’s Treasure",
-    year: "1944",
-    place: "Caribbean (approximate)",
-    lat: 17,
-    lng: -62,
-    themes: ["travel", "technology"],
-    fictional: true,
-    note: "A treasure hunt that ends with Marlinspike Hall, the series’ domestic anchor."
-  },
-
-  {
-    title: "The Seven Crystal Balls",
-    year: "1948",
-    place: "Belgium and Saint-Nazaire, France",
-    lat: 47.27,
-    lng: -2.21,
-    themes: ["travel", "modernity"],
-    fictional: false,
-    note: "Nightmare imagery echoing Griffith’s film, as argued in Drawn Cinema."
-  },
-
-  {
-    title: "Prisoners of the Sun",
-    year: "1949",
-    place: "Peruvian Andes",
-    lat: -13.5,
-    lng: -72,
-    themes: ["travel", "colonialism"],
-    fictional: false,
-    note: "A descent into an Inca world; the journey as encounter with the ancient and modern."
-  },
-
-  {
-    title: "Land of Black Gold",
-    year: "1950",
-    place: "Khemed (fictional), Middle East",
-    lat: 24.5,
-    lng: 45,
-    themes: ["travel", "modernity", "technology"],
-    fictional: true,
-    note: "Oil, fuel and desert travel; invented Middle Eastern geography."
-  },
-
-  {
-    title: "Destination Moon",
-    year: "1953",
-    place: "Syldavian launch site (fictional)",
-    lat: 44.6,
-    lng: 21.4,
-    themes: ["travel", "modernity", "technology"],
-    fictional: true,
-    note: "Cold War scientific modernity. The rocket as a ‘performative object’."
-  },
-
-  {
-    title: "Explorers on the Moon",
-    year: "1954",
-    place: "The Moon",
-    lat: null,
-    lng: null,
-    themes: ["travel", "modernity", "technology"],
-    fictional: true,
-    note: "The journey leaves the map altogether."
-  },
-
-  {
-    title: "The Calculus Affair",
-    year: "1956",
-    place: "Geneva, Switzerland, and Borduria (fictional)",
-    lat: 46.2,
-    lng: 6.14,
-    themes: ["travel", "modernity", "technology"],
-    fictional: false,
-    note: "Cold War espionage; Thomson and Thompson’s umbrella routine as absurd comedy."
-  },
-
-  {
-    title: "The Red Sea Sharks",
-    year: "1958",
-    place: "Red Sea",
-    lat: 20,
-    lng: 38,
-    themes: ["travel", "colonialism"],
-    fictional: false,
-    note: "Earlier characters and places return, a recycling of the series’ own world."
-  },
-
-  {
-    title: "Tintin in Tibet",
-    year: "1960",
-    place: "Nepal and Tibet",
-    lat: 28.4,
-    lng: 84.1,
-    themes: ["travel"],
-    fictional: false,
-    note: "An expedition driven by friendship rather than conflict. The most personal album."
-  },
-
-  {
-    title: "The Castafiore Emerald",
-    year: "1963",
-    place: "Marlinspike Hall, Belgium",
-    lat: 50.6,
-    lng: 4.3,
-    themes: ["modernity"],
-    fictional: false,
-    note: "The ‘journey’ album where nobody leaves home. Suspense without movement: a test case for the absurd."
-  },
-
-  {
-    title: "Flight 714 to Sydney",
-    year: "1968",
-    place: "Jakarta, Indonesia",
-    lat: -6.2,
-    lng: 106.82,
-    themes: ["travel", "modernity", "technology"],
-    fictional: false,
-    note: "Air travel as routine; a stopover turns into captivity."
-  },
-
-  {
-    title: "Tintin and the Picaros",
-    year: "1976",
-    place: "San Theodoros (fictional)",
-    lat: -10,
-    lng: -60,
-    themes: ["travel", "colonialism", "politics"],
-    fictional: true,
-    note: "The last completed album returns to San Theodoros: evidence for the cyclical argument."
-  }
+// ---------- Data ----------
+// place = [name, lat, lng, fictional(1/0)]. Route = places in order of travel. Brussels is the hub (no marker).
+const BR=["Brussels",50.85,4.35,0], MH=["Marlinspike Hall",50.6,4.3,0];
+const PH=["","Early Reporter (1929–37)","Wartime Escapism (1937–45)","Golden Age of Exploration (1944–60)","Late & Modern (1963–86)"];
+const A=[
+{n:"Tintin in the Land of the Soviets",y:1930,p:1,th:["travel","modernity"],pl:[BR,["Berlin",52.52,13.4,0],["Moscow",55.75,37.62,0],BR],c:"Soviet Russia, as seen from a Belgian newspaper’s perspective.",note:"The first departure: a reporter sent abroad, the template every later album repeats."},
+{n:"Tintin in the Congo",y:1931,p:1,th:["travel","colonialism"],pl:[BR,["Belgian Congo",-4.3,15.3,0],BR],c:"Belgian colonial rule; the series’ most criticised album for its colonial representation.",note:"Colonial setting drawn by an ‘armchair traveller’."},
+{n:"Tintin in America",y:1932,p:1,th:["travel","modernity"],pl:[BR,["New York",40.71,-74,0],["Chicago",41.88,-87.63,0],["American Midwest",40.5,-95,0]],c:"Prohibition-era gangster America.",note:"Gangster iconography and Chaplin/Keaton-style gags."},
+{n:"Cigars of the Pharaoh",y:1934,p:1,th:["travel","colonialism"],nat:"Gaipajama",pl:[["Port Said",31.26,32.3,0],["Cairo",30.04,31.24,0],["Arabian Sea",18,65,0],["Gaipajama (princely state)",22,76,1]],c:"A fictional princely state inside real British India.",note:"Disguise and conspiracy borrowed from French silent serials."},
+{n:"The Blue Lotus",y:1936,p:1,th:["travel","colonialism","modernity"],pl:[["India",28.6,77.2,0],["Shanghai",31.23,121.47,0]],c:"Japanese-occupied China; strictly real geography.",note:"Research-based realism after Hergé’s meeting with Chang. Ligne claire matures."},
+{n:"The Broken Ear",y:1937,p:1,th:["travel","colonialism","politics"],nat:"San Theodoros",pl:[BR,["Brazil (port of call)",-22.9,-43.2,0],["San Theodoros",-12,-62,1],["Nuevo Rico",-19,-60,1]],c:"Two invented republics mirroring the real Chaco War.",note:"Invented geography enters the series."},
+{n:"The Black Island",y:1938,p:2,th:["travel","technology"],pl:[BR,["London",51.5,-0.12,0],["Kiltoch (Scotland)",56.4,-5.5,0],["Ben More Island",56.2,-6.1,1]],c:"Pursuit across modern transport: plane, train, boat.",note:"A fictional Scottish island hosts the climax."},
+{n:"King Ottokar’s Sceptre",y:1939,p:2,th:["travel","politics","technology"],nat:"Syldavia",pl:[BR,["Frankfurt",50.11,8.68,0],["Prague",50.08,14.43,0],["Klow, Syldavia",44.2,21,1],["Borduria (border)",45.3,24,1]],c:"Pre-WWII annexation tensions (the Anschluss).",note:"A fictional Balkan kingdom that later hosts the rocket launch."},
+{n:"The Crab with the Golden Claws",y:1941,p:2,th:["travel","colonialism","technology"],pl:[BR,["Tangier",35.76,-5.8,0],["Sahara Desert",27,-5,0]],c:"French North Africa in the 1940s.",note:"Cross-cutting and rhythm control. Captain Haddock arrives."},
+{n:"The Shooting Star",y:1942,p:2,th:["travel","technology"],pl:[BR,["Akureyri, Iceland",65.69,-18.1,0],["Meteorite Island",70,-15,1]],c:"Apocalyptic anxiety in the occupation years.",note:"A race to a fallen meteorite; the island grows from international waters."},
+{n:"The Secret of the Unicorn",y:1943,p:2,th:["travel","modernity"],pl:[MH],c:"Entirely domestic.",note:"A mystery that starts in a city market. The journey begins at home."},
+{n:"Red Rackham’s Treasure",y:1944,p:2,th:["travel","technology"],pl:[BR,["Caribbean Sea",17,-62,0],["Haddock’s Island",15,-64,1]],c:"Treasure hunt that ends with the purchase of Marlinspike Hall.",note:"An uncharted tropical island where the pirate ship sank."},
+{n:"The Seven Crystal Balls",y:1948,p:3,th:["travel","modernity"],pl:[MH,["Saint-Nazaire",47.27,-2.21,0]],c:"Departure port for the voyage to Peru.",note:"Nightmare imagery echoing early cinema."},
+{n:"Prisoners of the Sun",y:1949,p:3,th:["travel","colonialism"],pl:[["Callao",-12.05,-77.15,0],["Jauja",-11.78,-75.5,0],["Secret Inca Temple",-11,-73,1]],c:"A hidden Inca civilisation in the Peruvian jungle.",note:"The journey as encounter with the ancient and the modern."},
+{n:"Land of Black Gold",y:1950,p:3,th:["travel","modernity","technology","politics"],nat:"Khemed",pl:[BR,["Caiffa / Wadesdah, Khemed",24.5,45,1]],c:"Fictional Arab state placed on the Arabian Peninsula; oil politics.",note:"Oil, fuel and desert travel."},
+{n:"Destination Moon",y:1953,p:3,th:["travel","modernity","technology"],nat:"Syldavia",pl:[BR,["Sprodj Research Centre",44.6,21.4,1]],c:"Cold War scientific modernity.",note:"The rocket as a performative object."},
+{n:"Explorers on the Moon",y:1954,p:3,th:["travel","modernity","technology"],nat:"Syldavia",pl:[["Sprodj Research Centre",44.6,21.4,1]],off:"The Moon (Plato Crater)",c:"The journey leaves the map altogether.",note:"Syldavia is the departure and arrival point."},
+{n:"The Calculus Affair",y:1956,p:3,th:["travel","modernity","technology","politics"],nat:"Borduria",pl:[BR,["Geneva",46.2,6.14,0],["Nyon",46.38,6.24,0],["Szohôd, Borduria",45,24.5,1]],c:"Cold War espionage and weapons research.",note:"Thomson and Thompson’s umbrella routine as absurd comedy."},
+{n:"The Red Sea Sharks",y:1958,p:3,th:["travel","colonialism","politics"],nat:"Khemed",pl:[BR,["Red Sea",20,38,0],["Wadesdah, Khemed",24.5,45,1]],c:"Earlier characters and places return.",note:"A recycling of the series’ own world."},
+{n:"Tintin in Tibet",y:1960,p:3,th:["travel"],pl:[["Swiss Alps resort",46.5,8,0],["New Delhi",28.6,77.2,0],["Patna",25.6,85.1,0],["Kathmandu",27.7,85.3,0],["Himalayas",28.4,84.1,0],["Khor-Biyong monastery",28.8,86.5,1]],c:"An expedition driven by friendship rather than conflict.",note:"The most personal album."},
+{n:"The Castafiore Emerald",y:1963,p:4,th:["modernity"],pl:[MH],c:"Nobody leaves home.",note:"Suspense without movement: a test case for the absurd."},
+{n:"Flight 714 to Sydney",y:1968,p:4,th:["travel","modernity","technology"],pl:[["Jakarta",-6.2,106.82,0],["Pulau-pulau Bompa",1.5,121,1],["Sydney",-33.87,151.2,0]],off:"Outer space (extraterrestrial levitation)",c:"Air travel as routine; a stopover turns into captivity.",note:"A fictional volcanic island in the Celebes Sea."},
+{n:"Tintin and the Picaros",y:1976,p:4,th:["travel","colonialism","politics"],nat:"San Theodoros",pl:[BR,["Tapiocapolis, San Theodoros",-10,-60,1]],c:"Latin American coups and guerrilla politics.",note:"Returns to San Theodoros: evidence for the cyclical argument."},
+{n:"Tintin and Alph-Art (unfinished)",y:1986,p:4,th:["modernity"],pl:[BR,["Ischia, Italy",40.73,13.9,0]],c:"Based on Hergé’s surviving drafts and notes.",note:"The unfinished final album."}
 ];
 
-    // ---------- Markers ----------
-    const markers = [];   // { marker (or null), album, index }
+// ---------- Map ----------
+const map=L.map("map",{zoomControl:false,minZoom:2,worldCopyJump:true}).setView([30,30],2.5);
+L.control.zoom({position:"topright"}).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+const routeLayer=L.layerGroup().addTo(map), natLayer=L.layerGroup().addTo(map);
+const path=L.polyline([],{color:"#b64035",weight:1.5,dashArray:"4 7",opacity:.5}).addTo(map);
+const hubCircle=L.circle([50.85,4.35],{radius:900000,color:"#292d2b",weight:1,fillOpacity:.08});
 
-    albums.forEach((album, index) => {
-      let marker = null;
+const anchor=a=>{const x=a.pl.filter(p=>p[0]!=="Brussels");return x[x.length-1]||a.pl[0]};
+A.forEach((a,i)=>{
+  a.i=i; a.nat=a.nat||null; a.layers=[];
+  a.pl.forEach(p=>{ if(p[0]==="Brussels")return;
+    const m=L.marker([p[1],p[2]],{icon:L.divIcon({className:"",html:`<div class="m ${p[3]?"f":""}"><span>${i+1}</span></div>`,iconSize:[27,27],iconAnchor:[13,13]})});
+    m.bindTooltip(`${p[0]} · ${a.n}`); m.on("click",()=>select(i));
+    m.fic=!!p[3]; a.layers.push(m);
+  });
+});
 
-      // Only create a marker when the album has real coordinates.
-      if (album.lat !== null && album.lng !== null) {
-        const icon = L.divIcon({
-          className: "",
-          html: `<div class="album-marker ${album.fictional ? "fictional-marker" : "real-marker"}"><span>${index + 1}</span></div>`,
-          iconSize: [27, 27],
-          iconAnchor: [13, 13]
-        });
+// ---------- State & controls ----------
+const S={phase:0,theme:"all",nat:"all",q:"",limit:A.length,real:true,fic:true,path:true,home:false,sel:null};
+const CHIPS={
+  phase:["f-phase",[[0,"All"],[1,"Early Reporter"],[2,"Wartime Escapism"],[3,"Golden Age"],[4,"Late Era"]]],
+  theme:["f-theme",[["all","All"],["travel","Travel"],["colonialism","Colonialism"],["modernity","Modernity"],["technology","Technology"],["politics","Politics"]]],
+  nat:["f-nat",[["all","None"],["Syldavia","Syldavia"],["Borduria","Borduria"],["Khemed","Khemed"],["San Theodoros","San Theodoros"],["Gaipajama","Gaipajama"]]]
+};
+function drawChips(key){
+  const [el,items]=CHIPS[key];
+  $(el).innerHTML=items.map(([v,l])=>`<button class="chip ${String(S[key])===String(v)?"on":""}" data-v="${v}">${l}</button>`).join("");
+}
+Object.keys(CHIPS).forEach(key=>{
+  drawChips(key);
+  $(CHIPS[key][0]).addEventListener("click",e=>{
+    const b=e.target.closest(".chip");if(!b)return;
+    S[key]=key==="phase"?Number(b.dataset.v):b.dataset.v;
+    drawChips(key);update();
+  });
+});
 
-        marker = L.marker([album.lat, album.lng], { icon: icon, title: album.title });
+const slider=$("slider");slider.max=A.length;slider.value=A.length;
+slider.addEventListener("input",()=>{stop();S.limit=Number(slider.value);update()});
+$("search").addEventListener("input",e=>{S.q=e.target.value.toLowerCase().trim();update()});
+function tog(id,key){$(id).addEventListener("click",()=>{S[key]=!S[key];$(id).classList.toggle("on",S[key]);update()})}
+tog("t-real","real");tog("t-fic","fic");tog("t-path","path");tog("t-home","home");
 
-        const themeLabels = album.themes
-          .map(t => t.charAt(0).toUpperCase() + t.slice(1))
-          .join(" · ");
+const isHome=a=>a.pl[0][0]==="Marlinspike Hall"||(a.pl[0][0]==="Brussels"&&a.pl[a.pl.length-1][0]==="Brussels");
+function visible(a,ignoreLimit){
+  if(!ignoreLimit&&a.i>=S.limit)return false;
+  if(S.phase&&a.p!==S.phase)return false;
+  if(S.theme!=="all"&&!a.th.includes(S.theme))return false;
+  if(S.nat!=="all"&&a.nat!==S.nat)return false;
+  if(S.home&&!isHome(a))return false;
+  if(S.q&&!(a.n+" "+a.pl.map(p=>p[0]).join(" ")+" "+(a.nat||"")).toLowerCase().includes(S.q))return false;
+  return true;
+}
 
-        marker.bindPopup(`
-          <div class="popup-year">${album.year} · Album ${index + 1}</div>
-          <div class="popup-title">${album.title}</div>
-          <div class="popup-text"><b>Setting:</b> ${album.place}</div>
-          <div class="popup-text" style="margin-top:8px">${album.note}</div>
-          <div class="popup-theme">${themeLabels}</div>
-        `);
-      }
-
-      markers.push({ marker, album, index });
+// ---------- Update ----------
+function highlight(){
+  document.querySelectorAll(".m.sel").forEach(e=>e.classList.remove("sel"));
+  if(S.sel===null)return;
+  A[S.sel].layers.forEach(m=>{const e=m.getElement();if(e&&e.firstChild)e.firstChild.classList.add("sel")});
+}
+function update(){
+  let real=0,fic=0,n=0;const pts=[];
+  A.forEach(a=>{
+    const v=visible(a);
+    a.layers.forEach(m=>{
+      const show=v&&(m.fic?S.fic:S.real);
+      if(show){if(!map.hasLayer(m))m.addTo(map)}else if(map.hasLayer(m))map.removeLayer(m);
     });
+    if(v){n++;a.pl.forEach(p=>{if(p[0]!=="Brussels")p[3]?fic++:real++});const t=anchor(a);pts.push([t[1],t[2]])}
+  });
+  path.setLatLngs(S.path?pts:[]);
+  natLayer.clearLayers();
+  if(S.nat!=="all"){
+    const ls=A.filter(a=>a.nat===S.nat&&a.i<S.limit).map(a=>{const t=anchor(a);return [t[1],t[2]]});
+    if(ls.length>1)L.polyline(ls,{color:"#777d59",weight:3,opacity:.8}).addTo(natLayer);
+  }
+  if(S.home){if(!map.hasLayer(hubCircle))hubCircle.addTo(map)}else if(map.hasLayer(hubCircle))map.removeLayer(hubCircle);
+  $("s-alb").textContent=n;$("s-real").textContent=real;$("s-fic").textContent=fic;
+  $("s-pct").textContent=(real+fic?Math.round(fic/(real+fic)*100):0)+"%";
+  const c=A[S.limit-1];$("sl-label").textContent=`Albums 1–${S.limit} · up to ${c.n} (${c.y})`;
+  $("offmap").innerHTML=A.filter(a=>a.off&&visible(a)).map(a=>`<div><b>Beyond the map:</b> ${a.i+1}. ${a.n} — ${a.off}</div>`).join("");
+  highlight();
+}
 
-    // Dashed line joining the albums in publication order.
-    const path = L.polyline([], { color: "#b64035", weight: 1.5, dashArray: "4 7", opacity: 0.55 }).addTo(map);
+// ---------- Selection, route animation, panel ----------
+let routeTimer=null;
+function select(i){
+  S.sel=i;const a=A[i];
+  history.replaceState(null,"","#album="+(i+1));
+  routeLayer.clearLayers();
+  if(routeTimer){clearInterval(routeTimer);routeTimer=null}
+  highlight();
+  const pts=a.pl.map(p=>[p[1],p[2]]);
+  const line=L.polyline([],{color:"#b64035",weight:3,opacity:.9}).addTo(routeLayer);
+  const dash=L.polyline([],{color:"#777d59",weight:3,dashArray:"6 6"}).addTo(routeLayer);
+  let k=1;
+  routeTimer=setInterval(()=>{
+    if(k>=pts.length){clearInterval(routeTimer);routeTimer=null;return}
+    const target=(a.pl[k][3]||a.pl[k-1][3])?dash:line;
+    target.addLatLng(pts[k-1]);target.addLatLng(pts[k]);k++;
+  },380);
+  if(pts.length>1)map.flyToBounds(L.latLngBounds(pts).pad(.4),{duration:1.2,maxZoom:6});else map.flyTo(pts[0],5,{duration:1.2});
+  const stops=a.pl.map((p,j)=>`<li class="${p[3]?"f":""}" data-j="${j}">${p[3]?"◆ ":"● "}${p[0]}</li>`).join("");
+  $("panel").innerHTML=`<div class="yr">${a.y} · Album ${i+1} of ${A.length}</div><h2>${a.n}</h2>
+   <span class="tag ph">${PH[a.p]}</span>${a.th.map(t=>`<span class="tag">${t}</span>`).join("")}${a.nat?`<span class="tag ph">${a.nat}</span>`:""}
+   <p>${a.note}</p><p class="ctx"><b>What Hergé mirrors:</b> ${a.c}</p>
+   <b style="font-size:11px;letter-spacing:1px">ROUTE (click a stop)</b><ul class="stops">${stops}</ul>
+   ${a.off?`<p class="hint">Beyond the map: ${a.off}</p>`:""}
+   <div class="nav"><button class="chip" id="prev">← Prev</button><button class="chip" id="next">Next →</button></div>${bars()}`;
+  $("prev").onclick=()=>step(-1);$("next").onclick=()=>step(1);
+  $("panel").querySelectorAll(".stops li").forEach(li=>li.onclick=()=>{const p=a.pl[Number(li.dataset.j)];map.flyTo([p[1],p[2]],6,{duration:1})});
+}
+// move to the previous/next album that passes the current filters
+function step(d){
+  const ids=A.filter(a=>visible(a,true)).map(a=>a.i);
+  if(!ids.length)return;
+  let pos=ids.indexOf(S.sel);
+  if(pos<0)pos=d>0?-1:0;
+  select(ids[(pos+d+ids.length)%ids.length]);
+}
+function bars(){
+  const rows=[1,2,3,4].map(p=>{let r=0,f=0;A.filter(a=>a.p===p).forEach(a=>a.pl.forEach(x=>{if(x[0]!=="Brussels")x[3]?f++:r++}));
+    const tot=r+f||1;return `<div class="bar"><b>Era ${p}</b><div class="track"><i style="width:${r/tot*100}%;background:#b64035"></i><i style="width:${f/tot*100}%;background:#777d59"></i></div><span>${Math.round(f/tot*100)}%</span></div>`}).join("");
+  return `<div class="bars"><b style="font-size:11px;letter-spacing:1px">IMAGINARY SHARE BY ERA</b>${rows}<p class="hint">Red = real, green = imaginary places.</p></div>`;
+}
+function showIntro(){$("panel").innerHTML=`<div class="yr">Welcome</div><h2>Choose an album</h2><p>Click any marker to trace that album’s route, see which places are real or invented, and what political context Hergé was mirroring.</p>
+  <p>Try: filter <b>Fictional nation → Syldavia</b> to see the albums linked by one invented country, or switch on <b>Belgium home-anchor</b> to see journeys that begin and end at home.</p>${bars()}`}
 
-    // ---------- State and update ----------
-    const slider = document.getElementById("slider");
-    const sliderLabel = document.getElementById("slider-label");
-    const playButton = document.getElementById("play");
-    const offmap = document.getElementById("offmap");
+// ---------- Play journey ----------
+let timer=null;
+function stop(){if(timer){clearInterval(timer);timer=null}$("play").textContent="▶ Play journey"}
+$("play").addEventListener("click",()=>{
+  if(timer){stop();return}
+  const list=A.filter(a=>visible(a,true));
+  if(!list.length)return;
+  let k=0;$("play").textContent="⏸ Pause";
+  const go=()=>{if(k>=list.length){stop();return}S.limit=list[k].i+1;slider.value=S.limit;update();select(list[k].i);k++};
+  go();timer=setInterval(go,3800);
+});
 
-    let selectedTheme = "all";
-    let limit = albums.length;   // how many albums (in order) are currently shown
-    let timer = null;
+// ---------- Reset ----------
+$("reset").addEventListener("click",()=>{
+  stop();
+  Object.assign(S,{phase:0,theme:"all",nat:"all",q:"",limit:A.length,real:true,fic:true,path:true,home:false,sel:null});
+  $("search").value="";slider.value=A.length;
+  ["t-real","t-fic","t-path"].forEach(id=>$(id).classList.add("on"));$("t-home").classList.remove("on");
+  Object.keys(CHIPS).forEach(drawChips);
+  routeLayer.clearLayers();if(routeTimer){clearInterval(routeTimer);routeTimer=null}
+  history.replaceState(null,"",location.pathname+location.search);
+  update();showIntro();map.flyTo([30,30],2.5,{duration:1});
+});
 
-    slider.max = albums.length;
-    slider.value = limit;
+// ---------- Keyboard ----------
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT")return;
+  if(e.key==="ArrowRight")step(1);
+  if(e.key==="ArrowLeft")step(-1);
+});
 
-    function update() {
-      const points = [];
-      let count = 0;
-      let offHtml = "";
-
-      markers.forEach(({ marker, album, index }) => {
-        const show = index < limit && (selectedTheme === "all" || album.themes.includes(selectedTheme));
-
-        if (marker) {
-          if (show) {
-            if (!map.hasLayer(marker)) marker.addTo(map);
-            points.push([album.lat, album.lng]);
-            count++;
-          } else if (map.hasLayer(marker)) {
-            map.removeLayer(marker);
-          }
-        } else if (show) {
-          offHtml += `<div><b>Off the map:</b> ${index + 1}. ${album.title} (${album.year}) — ${album.note}</div>`;
-        }
-      });
-
-      path.setLatLngs(points);
-      offmap.innerHTML = offHtml;
-      document.getElementById("location-count").textContent = count;
-
-      const current = albums[limit - 1];
-      sliderLabel.textContent = `Showing albums 1–${limit} · up to ${current.title} (${current.year})`;
-    }
-
-    // Theme filters
-    const filterButtons = document.querySelectorAll(".filter");
-    filterButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        filterButtons.forEach(b => b.classList.remove("active"));
-        button.classList.add("active");
-        selectedTheme = button.dataset.theme;
-        update();
-      });
-    });
-
-    // Slider
-    slider.addEventListener("input", () => {
-      stopPlaying();
-      limit = Number(slider.value);
-      update();
-    });
-
-    // Play journey
-    function stopPlaying() {
-      if (timer) { clearInterval(timer); timer = null; }
-      playButton.textContent = "▶ Play journey";
-    }
-
-    playButton.addEventListener("click", () => {
-      if (timer) { stopPlaying(); return; }
-      limit = 1;
-      slider.value = 1;
-      update();
-      playButton.textContent = "⏸ Pause";
-      timer = setInterval(() => {
-        if (limit >= albums.length) { stopPlaying(); return; }
-        limit++;
-        slider.value = limit;
-        update();
-      }, 1100);
-    });
-
-    update();
-    setTimeout(() => map.invalidateSize(), 250);
-    window.addEventListener("resize", () => map.invalidateSize());
-  </script>
-
+// ---------- Init ----------
+update();showIntro();
+const h=location.hash.match(/album=(\d+)/);
+if(h&&A[Number(h[1])-1])select(Number(h[1])-1);
+setTimeout(()=>map.invalidateSize(),250);
+window.addEventListener("resize",()=>map.invalidateSize());
+})();
+</script>
 </body>
 </html>
